@@ -1,0 +1,30 @@
+[tools]
+lefthook = "2.1.1"
+lua-language-server = "3.19.1"
+stylua = "2.5.2"
+
+[vars]
+mod_name = "modname-dev"
+dst_steam_path = "$HOME/.local/share/Steam/steamapps/common/Don't Starve Together"
+dst_steam_mod_location = "{{vars.dst_steam_path}}/mods/{{vars.mod_name}}"
+
+[hooks]
+postinstall = "lefthook install"
+
+[tasks]
+format = "stylua ."
+check = "lua-language-server --check ."
+
+[tasks.bundle]
+run = '''
+: ${out:?expected out}
+mkdir -p "$out"
+rm -rf "$out"/* "$out"/.*
+cp -r banner.png *.lua scripts/ "$out"/
+'''
+
+[tasks.dist]
+run = "out=dist/ mise run bundle"
+
+[tasks.dev]
+run = 'out="{{vars.dst_steam_mod_location}}" mise watch bundle'
