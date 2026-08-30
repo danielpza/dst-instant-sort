@@ -41,10 +41,10 @@ local function GenerateOptions()
    return utils
 end
 
-name = "modname-dev"
-description = "Add keybindings to use with tools, weapons, armor and much more."
+name = "Instant Sort"
+description = "Keep inventory sorted at all times with no delay. Pure client side."
 author = "danielpza"
-version = "0.9.2"
+version = "0.1.0"
 
 -- icon_atlas = "icon_atlas.xml"
 -- icon = "icon.tex"

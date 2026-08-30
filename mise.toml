@@ -4,7 +4,7 @@ lua-language-server = "3.19.1"
 stylua = "2.5.2"
 
 [vars]
-mod_name = "modname-dev"
+mod_name = "instant-sort"
 dst_steam_path = "$HOME/.local/share/Steam/steamapps/common/Don't Starve Together"
 dst_steam_mod_location = "{{vars.dst_steam_path}}/mods/{{vars.mod_name}}"
 
@@ -20,7 +20,7 @@ run = '''
 : ${out:?expected out}
 mkdir -p "$out"
 rm -rf "$out"/* "$out"/.*
-cp -r banner.png *.lua scripts/ "$out"/
+cp -r *.lua scripts/ "$out"/
 '''
 
 [tasks.dist]
