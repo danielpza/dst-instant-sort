@@ -26,6 +26,17 @@ local function cmp(a, b)
    if type(a) == "string" and type(b) == "string" then return cmp_string(a, b) end
    return cast_number(a) - cast_number(b)
 end
+
+---@generic T
+---@param arr T[]
+---@param item T
+---@return integer
+local function index_of(arr, item)
+   for i, v in ipairs(arr) do
+      if v == item then return i end
+   end
+   return 0
+end
 ----------------------------HELPERS----------------------------------
 
 ----------------------------HELPERS2----------------------------------
@@ -107,6 +118,28 @@ local function invslot_name_value(invslot)
    return item and item.name
 end
 
+---@param prefabs string[]
+---@return invslot_value
+local function invslot_prefabs(prefabs)
+   return function(invslot)
+      local item = invslot and invslot.tile and invslot.tile.item
+      -- this code is ugly, there might be a simpler way
+      if not item then return 0 end
+      local i = index_of(prefabs, item.prefab)
+      if i == 0 then return #prefabs + 1 end
+      return i
+   end
+end
+
+---@param prefabs string[]
+---@return invslot_value
+local function invslot_prefabs_back(prefabs)
+   return function(invslot)
+      local item = invslot and invslot.tile and invslot.tile.item
+      return item and (-1 / index_of(prefabs, item.prefab))
+   end
+end
+
 ----------------------------VALUES----------------------------------
 
 ---@type invslot_value[]
@@ -116,6 +149,7 @@ local SORT_BY = {
    invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.BODY),
    invslot_is_equippable,
    invslot_is_empty,
+   invslot_prefabs_back({ "cutgrass", "twigs", "goldnugget", "flint", "rocks", "log" }),
    invslot_name_value,
 }
 
