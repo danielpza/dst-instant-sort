@@ -156,7 +156,7 @@ local container_sort_cmp = sort_by({
    invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.HEAD),
    invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.BODY),
    invslot_is_equippable,
-   invslot_prefabs_back({ "cutgrass", "twigs", "goldnugget", "flint", "rocks", "log" }),
+   invslot_prefabs({ "cutgrass", "twigs", "goldnugget", "flint", "rocks", "log" }),
    invslot_name_value,
 })
 
