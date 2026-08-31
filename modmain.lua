@@ -159,7 +159,7 @@ local container_sort_cmp = sort_by({
    invslot_name_value,
 })
 
-local EVENTS = {
+local INVENTORYBAR_EVENTS = {
    "builditem",
    "itemget",
    "equip",
@@ -248,7 +248,7 @@ AddClassPostConstruct("widgets/inventorybar", function(self)
 
    local unregiser_backpack_events = nil
 
-   register_events(self.inst, EVENTS, refresh, self.owner)
+   register_events(self.inst, INVENTORYBAR_EVENTS, refresh, self.owner)
 
    local Rebuild = inventorybar.Rebuild
    function inventorybar:Rebuild()
