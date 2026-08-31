@@ -76,15 +76,6 @@ end
 ---@alias cmp_item fun(a: ds.entityscript, b: ds.entityscript): boolean
 ---@alias cmp_invslot fun(a: ds.widgets.invslot, b: ds.widgets.invslot): boolean
 
----@param fn item_value
----@return invslot_value
-local function wiht_invslot_item(fn)
-   return function(invslot)
-      local item = invslot and invslot.tile and invslot.tile.item
-      return item and fn(item)
-   end
-end
-
 ---@param item ds.entityscript
 ---@param slot ds.equipslot
 ---@return boolean
