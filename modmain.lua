@@ -1,9 +1,10 @@
-local virtual_inventory = require("instant_sort/virtual_inventory")
-local utils = require("instant_sort/utils")
 -- for debugging
 GLOBAL.CHEATS_ENABLED = true
 require("debugkeys")
 --
+
+local virtual_inventory = require("instant_sort/virtual_inventory")
+local utils = require("instant_sort/utils")
 
 ----------------------------HELPERS----------------------------------
 
