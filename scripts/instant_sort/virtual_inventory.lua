@@ -54,13 +54,13 @@ function virtual_inventory.get_positions(invslots)
    return positions
 end
 
-local KEY = "___INSTANT_SORT_DATA"
+local register = {}
 
 ---@param invslots ds.widgets.invslot[]
 ---@return virual_inventory_data
 function virtual_inventory.from(invslots)
    ---@diagnostic disable-next-line: return-type-mismatch
-   if invslots[KEY] then return invslots[KEY] end
+   if register[invslots] then return register[invslots] end
 
    ---@class virual_inventory_data
    local wrapper = {
@@ -91,7 +91,7 @@ function virtual_inventory.from(invslots)
    function wrapper:GetOriginalSlot(index) return self.slot_redirect and self.slot_redirect[index] or index end
 
    ---@diagnostic disable-next-line: assign-type-mismatch
-   invslots[KEY] = wrapper
+   register[invslots] = wrapper
 
    return wrapper
 end
