@@ -6,8 +6,8 @@ require("debugkeys")
 local virtual_inv = require("instant-sort/virtual_inventory")
 local dst_utils = require("instant-sort/dst_utils")
 local utils = require("instant-sort/utils")
-local CONFIG_EXAMPLE_BOOLEAN_OPTION = GetModConfigData("EXAMPLE_BOOLEAN_OPTION")
-local CONFIG_EXAMPLE_KEYBINDING = GetModConfigData("EXAMPLE_KEYBINDING")
+
+local KEY_TOGGLE = GetModConfigData("KEY_TOGGLE")
 
 ---@generic T
 ---@param cmp fun(a: T, b: T): number
@@ -122,7 +122,7 @@ local function refresh()
    virtual_inv:SortInvSlots(inv_slot_cmp)
 end
 
-GLOBAL.TheInput:AddKeyUpHandler(GLOBAL.KEY_P, function()
+GLOBAL.TheInput:AddKeyUpHandler(KEY_TOGGLE, function()
    if not player_is_ready() then return end
    if not get_player_inventorybar() then return end
 

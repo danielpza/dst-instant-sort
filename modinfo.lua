@@ -61,7 +61,5 @@ local utils = GenerateOptions()
 
 configuration_options = {
    utils.Title("Options"),
-   utils.BooleanOption("EXAMPLE_BOOLEAN_OPTION", true, "Example Boolean Option"),
-   utils.Title("Keybindings"),
-   utils.Keybind("EXAMPLE_KEYBINDING", "g", "Keybinding"),
+   utils.Keybind("KEY_TOGGLE", "p", "Toggle Key"),
 }
