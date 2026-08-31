@@ -139,6 +139,17 @@ end
 
 ---@type invslot_value
 local inventory_sort_cmp = sort_by({
+   -- TODO
+   -- cane
+   -- hambat
+   -- weapons
+   -- armor
+   -- light
+   -- insulation/raincoat/etc
+   -- tools
+   -- sanity
+   -- healing
+   -- food
    invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.HANDS),
    invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.HEAD),
    invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.BODY),
