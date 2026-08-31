@@ -7,7 +7,7 @@ require("debugkeys")
 
 local KEY_TOGGLE = GetModConfigData("KEY_TOGGLE")
 
-----------------------------HELPERS2----------------------------------
+----------------------------HELPERS----------------------------------
 
 ---@generic T
 ---@param prefab string
@@ -59,7 +59,7 @@ local function register_events(instance, events, handler, target)
    return function() unregister_events(instance, events, handler, target) end
 end
 
-----------------------------HELPERS2----------------------------------
+----------------------------HELPERS----------------------------------
 
 ----------------------------VALUES----------------------------------
 ---@alias item_value fun(a: ds.entityscript): any
@@ -301,3 +301,6 @@ AddClassPostConstruct("widgets/inventorybar", function(self)
       end
    end
 end)
+
+-- local inventory = self.owner.inventory
+-- inventory:GetItemInSlot
