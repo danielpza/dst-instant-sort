@@ -8,7 +8,7 @@ local function cast_booelan(v) return v and true or false end
 function utils.cmp_boolean(a, b)
    local aa = cast_booelan(a)
    local bb = cast_booelan(b)
-   if aa == b then return 0 end
+   if aa == bb then return 0 end
    return aa and -1 or 1
 end
 
