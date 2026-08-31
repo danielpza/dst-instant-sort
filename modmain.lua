@@ -4,16 +4,27 @@ require("debugkeys")
 --
 
 local virtual_inv = require("instant-sort/virtual_inventory")
-local dst_utils = require("instant-sort/dst_utils")
-local utils = require("instant-sort/utils")
 
 local KEY_TOGGLE = GetModConfigData("KEY_TOGGLE")
 
----@generic T
----@param cmp fun(a: T, b: T): number
----@return fun(a: T, b: T): number
-function desc(cmp)
-   return function(a, b) return -cmp(a, b) end
+local function cast_number(v)
+   if type(v) == "number" then return v end
+   if v == nil then return 0 end
+   if v == false then return 0 end
+   return -1
+end
+
+---@param a string
+---@param b string
+---@return number
+local function cmp_string(a, b)
+   if a == b then return 0 end
+   return a < b and -1 or 1
+end
+
+local function cmp(a, b)
+   if type(a) == "string" and type(b) == "string" then return cmp_string(a, b) end
+   return cast_number(a) - cast_number(b)
 end
 
 ---@generic T
@@ -30,63 +41,55 @@ local function simulate_mastersim_prefab(prefab, fn)
    return result
 end
 
----@generic T
----@param fn fun(item: ds.entityscript): T
----@return fun(item: ds.entityscript): T
-local function with_mastersim_prefab(fn)
-   return function(item) return simulate_mastersim_prefab(item, fn) end
-end
-
----@alias cmp_item fun(a: ds.entityscript, b: ds.entityscript): number
----@alias cmp_invslot fun(a: ds.widgets.invslot, b: ds.widgets.invslot): number
-
----@type cmp_item
-local function cmp_item_by_name(a, b)
-   if a.name == b.name then return 0 end
-   return a.name < b.name and -1 or 1
-end
-
----@type cmp_item
-local function cmp_item_equippable(a, b)
-   return utils.cmp_boolean(dst_utils.is_equippable(a), dst_utils.is_equippable(b))
-end
-
--- ---@param slot ds.equipslot
--- ---@return cmp_item
--- local function cmp_item_slot_equippable(slot)
---    return function(a, b) end
+-- ---@generic T
+-- ---@param fn fun(item: ds.entityscript): T
+-- ---@return fun(item: ds.entityscript): T
+-- local function with_mastersim_prefab(fn)
+--    return function(item) return simulate_mastersim_prefab(item, fn) end
 -- end
 
----@param item_cmp cmp_item
----@return cmp_invslot
-local function cmp_invslot_item_(item_cmp)
-   return function(a, b)
-      local aitem = a and a.tile and a.tile.item
-      local bitem = b and b.tile and b.tile.item
+---@alias item_value fun(a: ds.entityscript): any
+---@alias invslot_value fun(a: ds.widgets.invslot): any
 
-      if not aitem and not bitem then return 0 end
-      if not aitem then return 1 end
-      if not bitem then return -1 end
+---@alias cmp_item fun(a: ds.entityscript, b: ds.entityscript): boolean
+---@alias cmp_invslot fun(a: ds.widgets.invslot, b: ds.widgets.invslot): boolean
 
-      return item_cmp(aitem, bitem)
-   end
+-- ---@param item ds.entityscript
+-- ---@param slot ds.equipslot
+-- ---@return boolean
+-- function dst_utils.can_be_equipped_in_slot(item, slot)
+--    return item and item.components and item.components.equippable and item.components.equippable.equipslot == slot
+-- end
+
+---@type invslot_value
+local function invslot_is_equippable(invslot)
+   local item = invslot and invslot.tile and invslot.tile.item
+   return item and item.replica and item.replica.equippable
 end
+
+---@type invslot_value
+local function invslot_is_empty(invslot) return not (invslot and invslot.tile and invslot.tile.item) end
+
+---@type invslot_value
+local function invslot_name_value(invslot)
+   return invslot and invslot.tile and invslot.tile.item and invslot.tile.item.name
+end
+
+---@type invslot_value[]
+local SORT_BY = {
+   invslot_is_equippable,
+   invslot_is_empty,
+   invslot_name_value,
+}
 
 ---@type cmp_invslot
-local function cmp_invslot_has_item(a, b)
-   return utils.cmp_boolean(a and a.tile and a.tile.item, b and b.tile and b.tile.item)
+local function inv_slot_cmp(a, b)
+   for _, get_value in ipairs(SORT_BY) do
+      local result = cmp(get_value(a), get_value(b))
+      if result ~= 0 then return result < 0 end
+   end
+   return false
 end
-
--- local SORT_ORDER = {
---    cmp_item_equippable,
---    cmp_item_by_name,
--- }
-
-local inv_slot_cmp = utils.sort_adapter(utils.cmp_many({
-   cmp_invslot_item_(cmp_item_equippable),
-   -- desc(cmp_invslot_has_item),
-   cmp_invslot_item_(cmp_item_by_name),
-}))
 
 local EVENTS = {
    "builditem",
@@ -122,7 +125,7 @@ local function refresh()
    virtual_inv:SortInvSlots(inv_slot_cmp)
 end
 
-GLOBAL.TheInput:AddKeyUpHandler(KEY_TOGGLE, function()
+local function toggle_sort()
    if not player_is_ready() then return end
    if not get_player_inventorybar() then return end
 
@@ -132,14 +135,14 @@ GLOBAL.TheInput:AddKeyUpHandler(KEY_TOGGLE, function()
    else
       virtual_inv:Reset()
    end
-end)
+end
+
+GLOBAL.TheInput:AddKeyUpHandler(KEY_TOGGLE, toggle_sort)
 
 ---@param self ds.widgets.inventorybar.inv
 AddClassPostConstruct("widgets/inventorybar", function(self)
    local inventorybar = self
    if inventorybar.owner ~= GLOBAL.ThePlayer then return end
-
-   virtual_inv:SetupInventorybarHooks(inventorybar)
 
    for _, event in ipairs(EVENTS) do
       self.inst:ListenForEvent(event, refresh, self.owner)
