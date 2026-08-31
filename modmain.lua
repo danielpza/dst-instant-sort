@@ -177,6 +177,9 @@ local INTEGRATED_BACKPACK_EVENTS = {
    "refresh",
 }
 
+---@type virual_inventory_data
+local player_virtual_inventory = nil
+
 ---@param self ds.widgets.containerwidget
 AddClassPostConstruct("widgets/containerwidget", function(self)
    local function refresh_container()
@@ -221,6 +224,20 @@ AddClassPostConstruct("widgets/containerwidget", function(self)
    end
 end)
 
+AddClassPostConstruct("screens/playerhud", function(self)
+   local OnControl = self.OnControl
+   function self:OnControl(control, down)
+      -- intercept control
+      if player_virtual_inventory and control >= GLOBAL.CONTROL_INV_1 and control <= GLOBAL.CONTROL_INV_10 then
+         local offset = GLOBAL.CONTROL_INV_1 - 1
+         local hot_key_num = control - offset
+         control = player_virtual_inventory:GetOriginalSlot(hot_key_num) + offset
+      end
+
+      return OnControl(self, control, down)
+   end
+end)
+
 ---@param self ds.widgets.inventorybar.inv
 AddClassPostConstruct("widgets/inventorybar", function(self)
    local inventorybar = self
@@ -233,6 +250,7 @@ AddClassPostConstruct("widgets/inventorybar", function(self)
 
    local function rebuild()
       virtual_inventory.from(self.inv):Rebuild()
+      player_virtual_inventory = virtual_inventory.from(self.inv)
       refresh()
    end
 
@@ -269,6 +287,3 @@ AddClassPostConstruct("widgets/inventorybar", function(self)
       end
    end
 end)
-
--- local inventory = self.owner.inventory
--- inventory:GetItemInSlot

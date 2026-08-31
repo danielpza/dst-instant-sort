@@ -15,13 +15,24 @@ end
 ---@param positions ds.vector3[]
 ---@param comp fun(a: ds.widgets.invslot, b: ds.widgets.invslot): boolean
 function virtual_inventory.sort_invslots(invslots, positions, comp)
-   local sorted_slots = shallow_copy(invslots)
-   table.sort(sorted_slots, comp)
+   ---@type { original_index: integer, invslot: ds.widgets.invslot }[]
+   local sorted_slots = {}
+   for k, value in ipairs(invslots) do
+      sorted_slots[#sorted_slots + 1] = { original_index = k, invslot = value }
+   end
+
+   table.sort(sorted_slots, function(a, b) return comp(a.invslot, b.invslot) end)
+
+   ---@type table<number, number>
+   local slot_redirect = {}
 
    for k, slot in ipairs(sorted_slots) do
       ---@diagnostic disable-next-line: missing-parameter
-      slot:SetPosition(positions[k])
+      slot.invslot:SetPosition(positions[k])
+      slot_redirect[k] = slot.original_index
    end
+
+   return slot_redirect
 end
 
 ---@param invslots ds.widgets.invslot[]
@@ -55,6 +66,8 @@ function virtual_inventory.from(invslots)
    local wrapper = {
       ---@type ds.vector3[]
       positions = nil,
+      ---@type table<number, number>
+      slot_redirect = nil,
    }
 
    function wrapper:Rebuild() self.positions = virtual_inventory.get_positions(invslots) end
@@ -67,13 +80,15 @@ function virtual_inventory.from(invslots)
    ---@param comp fun(a: ds.widgets.invslot, b: ds.widgets.invslot): boolean
    function wrapper:Sort(comp)
       if not self.positions then return end
-      virtual_inventory.sort_invslots(invslots, self.positions, comp)
+      self.slot_redirect = virtual_inventory.sort_invslots(invslots, self.positions, comp)
    end
 
    function wrapper:Kill()
       -- called from container widget
       self.positions = nil
    end
+
+   function wrapper:GetOriginalSlot(index) return self.slot_redirect and self.slot_redirect[index] or index end
 
    ---@diagnostic disable-next-line: assign-type-mismatch
    invslots[KEY] = wrapper
