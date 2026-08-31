@@ -25,12 +25,12 @@ end
 
 ---@type table<string, ds.entityscript>
 local cache = {}
----@param item ds.entityscript
+---@param item_ ds.entityscript
 ---@return ds.entityscript
-local function get_cached_mastersim_prefab(item)
-   if not cache[item.prefab] then
-      cache[item.prefab] = simulate_mastersim_prefab(
-         item.prefab,
+local function get_cached_mastersim_prefab(item_)
+   if not cache[item_.prefab] then
+      cache[item_.prefab] = simulate_mastersim_prefab(
+         item_.prefab,
          function(item)
             return item
                and {
@@ -43,7 +43,7 @@ local function get_cached_mastersim_prefab(item)
          end
       )
    end
-   return cache[item.prefab]
+   return cache[item_.prefab]
 end
 
 local function unregister_events(instance, events, handler, target)
@@ -263,36 +263,41 @@ AddClassPostConstruct("widgets/inventorybar", function(self)
    local inventorybar = self
    if inventorybar.owner ~= GLOBAL.ThePlayer then return end
 
+   local function rebuild()
+      virtual_inventory.from(self.inv):Rebuild()
+      refresh()
+   end
+
    local function refresh_backpack()
       if not keepitsorted then return end
       virtual_inventory.from(self.backpackinv):Sort(inventory_sort_cmp)
    end
 
-   local backpack = nil
+   local function rebuild_backpack()
+      virtual_inventory.from(self.backpackinv):Rebuild()
+      refresh_backpack()
+   end
+
+   local unregiser_backpack_events = nil
 
    register_events(self.inst, EVENTS, refresh, self.owner)
 
    local Rebuild = inventorybar.Rebuild
    function inventorybar:Rebuild()
       Rebuild(inventorybar)
-
-      virtual_inventory.from(inventorybar.inv):Rebuild()
-      refresh()
+      rebuild()
 
       -- similar to what the original code does for the integrated backpack mount/unmount:
-      if backpack then
-         unregister_events(self.inst, INTEGRATED_BACKPACK_EVENTS, refresh_backpack, backpack)
-         backpack = nil
+      if unregiser_backpack_events then
+         unregiser_backpack_events()
+         unregiser_backpack_events = nil
       end
       ---@diagnostic disable-next-line: undefined-field
-      backpack = self.backpack
-      if backpack then
-         register_events(self.inst, INTEGRATED_BACKPACK_EVENTS, refresh_backpack, backpack)
-         virtual_inventory.from(self.backpackinv):Rebuild()
-         refresh_backpack()
+      if self.backpack then
+         unregiser_backpack_events =
+            ---@diagnostic disable-next-line: undefined-field
+            register_events(self.inst, INTEGRATED_BACKPACK_EVENTS, refresh_backpack, self.backpack)
+         rebuild_backpack()
       end
    end
 end)
-
--- local inventory = self.owner.inventory
--- inventory:GetItemInSlot

@@ -45,6 +45,7 @@ function virtual_inventory.get_positions(invslots)
 end
 
 local KEY = "___INSTANT_SORT_DATA"
+
 ---@param invslots ds.widgets.invslot[]
 ---@return virual_inventory_data
 function virtual_inventory.from(invslots)
