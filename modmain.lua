@@ -30,6 +30,7 @@ end
 ----------------------------HELPERS----------------------------------
 
 ----------------------------HELPERS2----------------------------------
+
 ---@generic T
 ---@param prefab string
 ---@param fn fun(item: ds.entityscript): T
@@ -44,12 +45,37 @@ local function simulate_mastersim_prefab(prefab, fn)
    return result
 end
 
+---@type table<string, ds.entityscript>
+local cache = {}
+---@param item ds.entityscript
+---@return ds.entityscript
+local function get_cached_mastersim_prefab(item)
+   if not cache[item.prefab] then
+      cache[item.prefab] = simulate_mastersim_prefab(
+         item.prefab,
+         function(item)
+            return item
+               and {
+                  components = item.components and {
+                     equippable = item.components.equippable and {
+                        equipslot = item.components.equippable.equipslot,
+                     },
+                  },
+               }
+         end
+      )
+   end
+   return cache[item.prefab]
+end
+
 -- ---@generic T
 -- ---@param fn fun(item: ds.entityscript): T
 -- ---@return fun(item: ds.entityscript): T
 -- local function with_mastersim_prefab(fn)
 --    return function(item) return simulate_mastersim_prefab(item, fn) end
 -- end
+--
+
 ----------------------------HELPERS2----------------------------------
 
 ----------------------------VALUES----------------------------------
@@ -58,6 +84,23 @@ end
 
 ---@alias cmp_item fun(a: ds.entityscript, b: ds.entityscript): boolean
 ---@alias cmp_invslot fun(a: ds.widgets.invslot, b: ds.widgets.invslot): boolean
+
+---@param fn item_value
+---@return invslot_value
+local function wiht_invslot_item(fn)
+   return function(invslot)
+      local item = invslot and invslot.tile and invslot.tile.item
+      return item and fn(item)
+   end
+end
+
+---@param item ds.entityscript
+---@param slot ds.equipslot
+---@return boolean
+local function can_item_be_equipped_in_slot(item, slot)
+   local cached = get_cached_mastersim_prefab(item)
+   return cached and cached.components and cached.components.equippable and item.components.equippable.equipslot == slot
+end
 
 -- ---@param item ds.entityscript
 -- ---@param slot ds.equipslot
@@ -72,17 +115,31 @@ local function invslot_is_equippable(invslot)
    return item and item.replica and item.replica.equippable
 end
 
+---@param slot ds.equipslot
+---@return invslot_value
+local function invslot_can_be_equipped_in_slot(slot)
+   return function(invslot)
+      local item = invslot and invslot.tile and invslot.tile.item
+      return item and can_item_be_equipped_in_slot(item, slot)
+   end
+end
+
 ---@type invslot_value
 local function invslot_is_empty(invslot) return not (invslot and invslot.tile and invslot.tile.item) end
 
 ---@type invslot_value
 local function invslot_name_value(invslot)
-   return invslot and invslot.tile and invslot.tile.item and invslot.tile.item.name
+   local item = invslot and invslot.tile and invslot.tile.item
+   return item and item.name
 end
+
 ----------------------------VALUES----------------------------------
 
 ---@type invslot_value[]
 local SORT_BY = {
+   invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.HANDS),
+   invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.HEAD),
+   invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.BODY),
    invslot_is_equippable,
    invslot_is_empty,
    invslot_name_value,
