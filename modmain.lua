@@ -189,6 +189,46 @@ end
 
 GLOBAL.TheInput:AddKeyUpHandler(KEY_TOGGLE, toggle_sort)
 
+---@param self ds.widgets.containerwidget
+AddClassPostConstruct("widgets/containerwidget", function(self)
+   local function refresh_container()
+      if not keepitsorted then return end
+      if self.inv then virtual_inventory.from(self.inv):Sort(invslot_cmp) end
+   end
+
+   local function rebuild() virtual_inventory.from(self.inv):Rebuild() end
+
+   local Open = self.Open
+   ---@diagnostic disable-next-line: inject-field
+   function self:Open(container, doer)
+      local result = Open(self, container, doer)
+      rebuild()
+      refresh_container()
+      return result
+   end
+   local OnItemLose = self.OnItemLose
+   ---@diagnostic disable-next-line: inject-field
+   function self:OnItemLose(data)
+      local result = OnItemLose(self, data)
+      refresh_container()
+      return result
+   end
+   local OnItemGet = self.OnItemGet
+   ---@diagnostic disable-next-line: inject-field
+   function self:OnItemGet(data)
+      local result = OnItemGet(self, data)
+      refresh_container()
+      return result
+   end
+   local Refresh = self.Refresh
+   ---@diagnostic disable-next-line: inject-field
+   function self:Refresh()
+      local result = Refresh(self)
+      refresh_container()
+      return result
+   end
+end)
+
 ---@param self ds.widgets.inventorybar.inv
 AddClassPostConstruct("widgets/inventorybar", function(self)
    local inventorybar = self

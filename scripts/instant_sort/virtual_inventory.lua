@@ -4,7 +4,6 @@ local virtual_inventory = {}
 ---@param arr T[]
 ---@return T[]
 local function shallow_copy(arr)
-   ---@type T[]
    local sorted = {}
    for _, value in ipairs(arr) do
       sorted[#sorted + 1] = value
@@ -48,19 +47,31 @@ local KEY = "___INSTANT_SORT_DATA"
 ---@param invslots ds.widgets.invslot[]
 ---@return virual_inventory_data
 function virtual_inventory.from(invslots)
+   ---@diagnostic disable-next-line: return-type-mismatch
    if invslots[KEY] then return invslots[KEY] end
 
    ---@class virual_inventory_data
    local wrapper = {
       ---@type ds.vector3[]
-      positions = {},
+      positions = nil,
    }
 
    function wrapper:Rebuild() self.positions = virtual_inventory.get_positions(invslots) end
-   function wrapper:Reset() virtual_inventory.reset_invslots(invslots, self.positions) end
+   function wrapper:Reset()
+      if not self.positions then return end
+      virtual_inventory.reset_invslots(invslots, self.positions)
+   end
    ---@param comp fun(a: ds.widgets.invslot, b: ds.widgets.invslot): boolean
-   function wrapper:Sort(comp) virtual_inventory.sort_invslots(invslots, self.positions, comp) end
+   function wrapper:Sort(comp)
+      if not self.positions then return end
+      virtual_inventory.sort_invslots(invslots, self.positions, comp)
+   end
+   function wrapper:Kill()
+      -- called from container widget
+      self.positions = nil
+   end
 
+   ---@diagnostic disable-next-line: assign-type-mismatch
    invslots[KEY] = wrapper
 
    return wrapper
