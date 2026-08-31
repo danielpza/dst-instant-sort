@@ -157,6 +157,8 @@ local keepitsorted = true
 
 ---@type ds.vector3[]
 local inv_positions = {}
+---@type ds.vector3[]
+local backpack_positions = {}
 
 local function refresh()
    if not keepitsorted then return end
@@ -165,6 +167,10 @@ local function refresh()
    if not inventorybar then return end
 
    virtual_inventory.sort_invslots(inventorybar.inv, inv_positions, invslot_cmp)
+
+   if inventorybar.backpackinv then
+      virtual_inventory.sort_invslots(inventorybar.backpackinv, backpack_positions, invslot_cmp)
+   end
 end
 
 local function toggle_sort()
@@ -178,6 +184,9 @@ local function toggle_sort()
       refresh()
    else
       virtual_inventory.reset_invslots(inventorybar.inv, inv_positions)
+      if inventorybar.backpackinv then
+         virtual_inventory.reset_invslots(inventorybar.backpackinv, backpack_positions)
+      end
    end
 end
 
@@ -196,6 +205,11 @@ AddClassPostConstruct("widgets/inventorybar", function(self)
    function inventorybar:Rebuild()
       Rebuild(inventorybar)
       inv_positions = virtual_inventory.get_positions(inventorybar.inv)
+      if inventorybar.backpackinv then
+         backpack_positions = virtual_inventory.get_positions(inventorybar.backpackinv)
+      else
+         backpack_positions = {}
+      end
       refresh()
    end
 end)
