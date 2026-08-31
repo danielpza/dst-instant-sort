@@ -1,9 +1,8 @@
+local virtual_inventory = require("instant-sort/virtual_inventory")
 -- for debugging
 GLOBAL.CHEATS_ENABLED = true
 require("debugkeys")
 --
-
-local virtual_inv = require("instant-sort/virtual_inventory")
 
 local KEY_TOGGLE = GetModConfigData("KEY_TOGGLE")
 
@@ -154,24 +153,31 @@ local function player_is_ready()
    return GLOBAL.ThePlayer ~= nil and GLOBAL.TheFrontEnd:GetActiveScreen() == GLOBAL.ThePlayer.HUD
 end
 
-local keepitsorted = false
+local keepitsorted = true
+
+---@type ds.vector3[]
+local inv_positions = {}
 
 local function refresh()
    if not keepitsorted then return end
    if not player_is_ready() then return end
-   if not get_player_inventorybar() then return end
-   virtual_inv:SortInvSlots(invslot_cmp)
+   local inventorybar = get_player_inventorybar()
+   if not inventorybar then return end
+
+   virtual_inventory.sort_invslots(inventorybar.inv, inv_positions, invslot_cmp)
 end
 
 local function toggle_sort()
    if not player_is_ready() then return end
    if not get_player_inventorybar() then return end
+   local inventorybar = get_player_inventorybar()
+   if not inventorybar then return end
 
    keepitsorted = not keepitsorted
    if keepitsorted then
       refresh()
    else
-      virtual_inv:Reset()
+      virtual_inventory.reset_invslots(inventorybar.inv, inv_positions)
    end
 end
 
@@ -189,7 +195,7 @@ AddClassPostConstruct("widgets/inventorybar", function(self)
    local Rebuild = inventorybar.Rebuild
    function inventorybar:Rebuild()
       Rebuild(inventorybar)
-      virtual_inv:_Rebuild(inventorybar)
+      inv_positions = virtual_inventory.get_positions(inventorybar.inv)
       refresh()
    end
 end)
