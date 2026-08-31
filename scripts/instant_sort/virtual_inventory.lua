@@ -1,4 +1,3 @@
-local utils = require("instant_sort/utils")
 local virtual_inventory = {}
 
 ---@generic T
