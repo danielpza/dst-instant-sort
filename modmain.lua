@@ -180,17 +180,21 @@ local INTEGRATED_BACKPACK_EVENTS = {
 AddClassPostConstruct("widgets/containerwidget", function(self)
    local function refresh_container()
       -- if not keepitsorted then return end
-      if self.inv then virtual_inventory.from(self.inv):Sort(container_sort_cmp) end
+      if not self.inv then return end
+      virtual_inventory.from(self.inv):Sort(container_sort_cmp)
    end
 
-   local function rebuild() virtual_inventory.from(self.inv):Rebuild() end
+   local function rebuild()
+      if not self.inv then return end
+      virtual_inventory.from(self.inv):Rebuild()
+      refresh_container()
+   end
 
    local Open = self.Open
    ---@diagnostic disable-next-line: inject-field
    function self:Open(container, doer)
       local result = Open(self, container, doer)
       rebuild()
-      refresh_container()
       return result
    end
    local OnItemLose = self.OnItemLose
