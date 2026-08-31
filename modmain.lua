@@ -67,15 +67,6 @@ local function get_cached_mastersim_prefab(item)
    end
    return cache[item.prefab]
 end
-
--- ---@generic T
--- ---@param fn fun(item: ds.entityscript): T
--- ---@return fun(item: ds.entityscript): T
--- local function with_mastersim_prefab(fn)
---    return function(item) return simulate_mastersim_prefab(item, fn) end
--- end
---
-
 ----------------------------HELPERS2----------------------------------
 
 ----------------------------VALUES----------------------------------
@@ -101,13 +92,6 @@ local function can_item_be_equipped_in_slot(item, slot)
    local cached = get_cached_mastersim_prefab(item)
    return cached and cached.components and cached.components.equippable and item.components.equippable.equipslot == slot
 end
-
--- ---@param item ds.entityscript
--- ---@param slot ds.equipslot
--- ---@return boolean
--- function dst_utils.can_be_equipped_in_slot(item, slot)
---    return item and item.components and item.components.equippable and item.components.equippable.equipslot == slot
--- end
 
 ---@type invslot_value
 local function invslot_is_equippable(invslot)
