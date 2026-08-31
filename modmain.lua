@@ -6,30 +6,44 @@ require("debugkeys")
 local CONFIG_EXAMPLE_BOOLEAN_OPTION = GetModConfigData("EXAMPLE_BOOLEAN_OPTION")
 local CONFIG_EXAMPLE_KEYBINDING = GetModConfigData("EXAMPLE_KEYBINDING")
 
----@param fn fun(item: ds.entityscript): boolean
----@return fun(a: ds.entityscript, b: ds.entityscript): boolean
-local function cmp_by(fn)
-   return function(a, b) return fn(a) and not fn(b) end
+---@generic T
+---@param cmps (fun (a: T, b: T): number)[]
+---@return fun(a: T, b: T): boolean
+local function cmp_all_(cmps)
+   return function(a, b)
+      for _, cmp in ipairs(cmps) do
+         local result = cmp(a, b)
+         if result ~= 0 then return result < 0 end
+      end
+      return false
+   end
 end
 
----@type fun(a: ds.entityscript, b: ds.entityscript): boolean
-local function cmp_name(a, b) return a.name < b.name end
+---@param fn fun(item: ds.entityscript): boolean
+---@return fun(a: ds.entityscript, b: ds.entityscript): number
+local function cmp_by(fn)
+   return function(a, b)
+      local va = fn(a)
+      local vb = fn(b)
+      if va == vb then return 0 end
+      return va and -1 or 1
+   end
+end
 
-local cmp_equippable = cmp_by(function(item) return item.replica.equippable and true or false end)
+---@type fun(a: ds.entityscript, b: ds.entityscript): number
+local function cmp_name(a, b)
+   if a.name == b.name then return 0 end
+   return a.name < b.name and -1 or 1
+end
+
+local cmp_equippable = cmp_by(
+   function(item) return item and item.replica and item.replica.equippable and true or false end
+)
 
 local SORT_ORDER = {
    cmp_equippable,
    cmp_name,
 }
-
----@param a ds.entityscript
----@param b ds.entityscript
-local function cmp_all(a, b)
-   for _, cmp in ipairs(SORT_ORDER) do
-      if cmp(a, b) then return true end
-   end
-   return false
-end
 
 local EVENTS = {
    "builditem",
@@ -69,6 +83,25 @@ function virtual_inv:SetupInventorybarHooks(inventorybar)
    end
 end
 
+---@param cmp fun(a: ds.widgets.invslot, b: ds.widgets.invslot): boolean
+function virtual_inv:SortInvSlots(cmp)
+   local inventorybar = self.inventorybar
+
+   ---@type ds.widgets.invslot[]
+   local sorted_slots = {}
+
+   for _, slot in ipairs(inventorybar.inv) do
+      sorted_slots[#sorted_slots + 1] = slot
+   end
+
+   table.sort(sorted_slots, cmp)
+
+   for k, slot in ipairs(sorted_slots) do
+      ---@diagnostic disable-next-line: missing-parameter
+      slot:SetPosition(virtual_inv.positions[k])
+   end
+end
+
 function virtual_inv:Reset()
    local inventorybar = self.inventorybar
    for k, slot in ipairs(inventorybar.inv) do
@@ -90,35 +123,38 @@ local function player_is_ready()
    return GLOBAL.ThePlayer ~= nil or GLOBAL.TheFrontEnd:GetActiveScreen() == GLOBAL.ThePlayer.HUD
 end
 
-local function refresh()
-   ---@type ds.widgets.inventorybar.inv
-   local inventorybar = GLOBAL.ThePlayer.HUD.inventorybar
-   if not inventorybar then return end
+local cmp_all = cmp_all_(SORT_ORDER)
 
-   -- for k, slot in ipairs(inventorybar.inv) do
-   --    slot.SetPosition(positions[num_slot - k - 1])
-   -- end
-   -- -- slot.tile.item
+---@type fun(a: ds.widgets.invslot, b: ds.widgets.invslot): boolean
+local function inv_slot_cmp(a, b)
+   if not (a and a.tile and a.tile.item) then return false end
+   if not (b and b.tile and b.tile.item) then return true end
+   return cmp_all(a.tile.item, b.tile.item)
+end
+
+local keepitsorted = false
+
+local function refresh()
+   if not keepitsorted then return end
+   if not player_is_ready() then return end
+   if not get_player_inventorybar() then return end
+   virtual_inv:SortInvSlots(inv_slot_cmp)
 end
 
 GLOBAL.TheInput:AddKeyUpHandler(GLOBAL.KEY_P, function()
    if not player_is_ready() then return end
-   local inventorybar = get_player_inventorybar()
-   if not inventorybar then return end
+   if not get_player_inventorybar() then return end
 
-   local num_slot = #inventorybar.inv
-   for k, slot in ipairs(inventorybar.inv) do
-      ---@diagnostic disable-next-line: missing-parameter
-      slot:SetPosition(virtual_inv.positions[num_slot - k + 1])
-   end
+   virtual_inv:SortInvSlots(inv_slot_cmp)
+   keepitsorted = true
 end)
 
 GLOBAL.TheInput:AddKeyUpHandler(GLOBAL.KEY_O, function()
    if not player_is_ready() then return end
-   local inventorybar = get_player_inventorybar()
-   if not inventorybar then return end
+   if not get_player_inventorybar() then return end
 
    virtual_inv:Reset()
+   keepitsorted = false
 end)
 
 ---@param self ds.widgets.inventorybar.inv
