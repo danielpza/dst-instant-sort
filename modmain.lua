@@ -213,7 +213,6 @@ local function toggle_sort()
       refresh()
    else
       virtual_inventory.from(inventorybar.inv):Reset()
-      -- virtual_inventory.reset_invslots(inventorybar.inv, inv_positions)
       -- if inventorybar.backpackinv then
       --    virtual_inventory.reset_invslots(inventorybar.backpackinv, backpack_positions)
       -- end
