@@ -83,7 +83,7 @@ local function invslot_is_empty(invslot) return not (invslot and invslot.tile an
 ---@type invslot_value
 local function invslot_name_value(invslot)
    local item = invslot and invslot.tile and invslot.tile.item
-   return item and item.name
+   return item and item.prefab
 end
 
 ---@param prefabs string[]
@@ -104,7 +104,7 @@ end
 local function invslot_prefabs_back(prefabs)
    return function(invslot)
       local item = invslot and invslot.tile and invslot.tile.item
-      return item and (-1 / utils.index_of(prefabs, item.prefab))
+      return item and utils.index_of(prefabs, item.prefab)
    end
 end
 
