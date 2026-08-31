@@ -1,3 +1,4 @@
+local utils = require("instant_sort/utils")
 local virtual_inventory = {}
 
 ---@generic T
@@ -57,15 +58,18 @@ function virtual_inventory.from(invslots)
    }
 
    function wrapper:Rebuild() self.positions = virtual_inventory.get_positions(invslots) end
+
    function wrapper:Reset()
       if not self.positions then return end
       virtual_inventory.reset_invslots(invslots, self.positions)
    end
+
    ---@param comp fun(a: ds.widgets.invslot, b: ds.widgets.invslot): boolean
    function wrapper:Sort(comp)
       if not self.positions then return end
       virtual_inventory.sort_invslots(invslots, self.positions, comp)
    end
+
    function wrapper:Kill()
       -- called from container widget
       self.positions = nil

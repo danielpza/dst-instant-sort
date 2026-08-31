@@ -81,6 +81,9 @@ end
 local function invslot_is_empty(invslot) return not (invslot and invslot.tile and invslot.tile.item) end
 
 ---@type invslot_value
+local function invslot_is_filled(invslot) return (invslot and invslot.tile and invslot.tile.item) end
+
+---@type invslot_value
 local function invslot_name_value(invslot)
    local item = invslot and invslot.tile and invslot.tile.item
    return item and item.prefab
@@ -110,8 +113,19 @@ end
 
 ----------------------------VALUES----------------------------------
 
+local function sort_by(criteria)
+   ---@type cmp_invslot
+   return function(a, b)
+      for _, get_value in ipairs(criteria) do
+         local result = utils.cmp(get_value(a), get_value(b))
+         if result ~= 0 then return result < 0 end
+      end
+      return false
+   end
+end
+
 ---@type invslot_value[]
-local SORT_BY = {
+local inventory_sort_cmp = sort_by({
    invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.HANDS),
    invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.HEAD),
    invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.BODY),
@@ -119,16 +133,17 @@ local SORT_BY = {
    invslot_is_empty,
    invslot_prefabs_back({ "cutgrass", "twigs", "goldnugget", "flint", "rocks", "log" }),
    invslot_name_value,
-}
+})
 
----@type cmp_invslot
-local function invslot_cmp(a, b)
-   for _, get_value in ipairs(SORT_BY) do
-      local result = utils.cmp(get_value(a), get_value(b))
-      if result ~= 0 then return result < 0 end
-   end
-   return false
-end
+local container_sort_cmp = sort_by({
+   invslot_is_filled,
+   invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.HANDS),
+   invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.HEAD),
+   invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.BODY),
+   invslot_is_equippable,
+   invslot_prefabs_back({ "cutgrass", "twigs", "goldnugget", "flint", "rocks", "log" }),
+   invslot_name_value,
+})
 
 local EVENTS = {
    "builditem",
@@ -163,7 +178,7 @@ local function refresh()
    local inventorybar = get_player_inventorybar()
    if not inventorybar then return end
 
-   virtual_inventory.from(inventorybar.inv):Sort(invslot_cmp)
+   virtual_inventory.from(inventorybar.inv):Sort(inventory_sort_cmp)
 
    -- if inventorybar.backpackinv then
    --    virtual_inventory.sort_invslots(inventorybar.backpackinv, backpack_positions, invslot_cmp)
@@ -193,7 +208,7 @@ GLOBAL.TheInput:AddKeyUpHandler(KEY_TOGGLE, toggle_sort)
 AddClassPostConstruct("widgets/containerwidget", function(self)
    local function refresh_container()
       if not keepitsorted then return end
-      if self.inv then virtual_inventory.from(self.inv):Sort(invslot_cmp) end
+      if self.inv then virtual_inventory.from(self.inv):Sort(container_sort_cmp) end
    end
 
    local function rebuild() virtual_inventory.from(self.inv):Rebuild() end
