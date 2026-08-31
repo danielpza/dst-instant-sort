@@ -1,43 +1,11 @@
-local virtual_inventory = require("instant-sort/virtual_inventory")
+local virtual_inventory = require("instant_sort/virtual_inventory")
+local utils = require("instant_sort/utils")
 -- for debugging
 GLOBAL.CHEATS_ENABLED = true
 require("debugkeys")
 --
 
 local KEY_TOGGLE = GetModConfigData("KEY_TOGGLE")
-
-----------------------------HELPERS----------------------------------
-local function cast_number(v)
-   if type(v) == "number" then return v end
-   if v == nil then return 0 end
-   if v == false then return 0 end
-   return -1
-end
-
----@param a string
----@param b string
----@return number
-local function cmp_string(a, b)
-   if a == b then return 0 end
-   return a < b and -1 or 1
-end
-
-local function cmp(a, b)
-   if type(a) == "string" and type(b) == "string" then return cmp_string(a, b) end
-   return cast_number(a) - cast_number(b)
-end
-
----@generic T
----@param arr T[]
----@param item T
----@return integer
-local function index_of(arr, item)
-   for i, v in ipairs(arr) do
-      if v == item then return i end
-   end
-   return 0
-end
-----------------------------HELPERS----------------------------------
 
 ----------------------------HELPERS2----------------------------------
 
@@ -125,7 +93,7 @@ local function invslot_prefabs(prefabs)
       local item = invslot and invslot.tile and invslot.tile.item
       -- this code is ugly, there might be a simpler way
       if not item then return 0 end
-      local i = index_of(prefabs, item.prefab)
+      local i = utils.index_of(prefabs, item.prefab)
       if i == 0 then return #prefabs + 1 end
       return i
    end
@@ -136,7 +104,7 @@ end
 local function invslot_prefabs_back(prefabs)
    return function(invslot)
       local item = invslot and invslot.tile and invslot.tile.item
-      return item and (-1 / index_of(prefabs, item.prefab))
+      return item and (-1 / utils.index_of(prefabs, item.prefab))
    end
 end
 
@@ -156,7 +124,7 @@ local SORT_BY = {
 ---@type cmp_invslot
 local function invslot_cmp(a, b)
    for _, get_value in ipairs(SORT_BY) do
-      local result = cmp(get_value(a), get_value(b))
+      local result = utils.cmp(get_value(a), get_value(b))
       if result ~= 0 then return result < 0 end
    end
    return false
