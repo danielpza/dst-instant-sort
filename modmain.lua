@@ -189,10 +189,10 @@ end
 
 local keepitsorted = true
 
----@type ds.vector3[]
-local inv_positions = {}
----@type ds.vector3[]
-local backpack_positions = {}
+-- ---@type ds.vector3[]
+-- local inv_positions = {}
+-- ---@type ds.vector3[]
+-- local backpack_positions = {}
 
 local function refresh()
    if not keepitsorted then return end
@@ -200,11 +200,11 @@ local function refresh()
    local inventorybar = get_player_inventorybar()
    if not inventorybar then return end
 
-   virtual_inventory.sort_invslots(inventorybar.inv, inv_positions, invslot_cmp)
+   virtual_inventory.from(inventorybar.inv):Sort(invslot_cmp)
 
-   if inventorybar.backpackinv then
-      virtual_inventory.sort_invslots(inventorybar.backpackinv, backpack_positions, invslot_cmp)
-   end
+   -- if inventorybar.backpackinv then
+   --    virtual_inventory.sort_invslots(inventorybar.backpackinv, backpack_positions, invslot_cmp)
+   -- end
 end
 
 local function toggle_sort()
@@ -217,10 +217,11 @@ local function toggle_sort()
    if keepitsorted then
       refresh()
    else
-      virtual_inventory.reset_invslots(inventorybar.inv, inv_positions)
-      if inventorybar.backpackinv then
-         virtual_inventory.reset_invslots(inventorybar.backpackinv, backpack_positions)
-      end
+      virtual_inventory.from(inventorybar.inv):Reset()
+      -- virtual_inventory.reset_invslots(inventorybar.inv, inv_positions)
+      -- if inventorybar.backpackinv then
+      --    virtual_inventory.reset_invslots(inventorybar.backpackinv, backpack_positions)
+      -- end
    end
 end
 
@@ -231,19 +232,23 @@ AddClassPostConstruct("widgets/inventorybar", function(self)
    local inventorybar = self
    if inventorybar.owner ~= GLOBAL.ThePlayer then return end
 
+   -- local overflow = inventorybar.owner.replica.inventory and inventorybar.owner.replica.inventory:GetOverflowContainer()
+   -- local do_integrated_backpack = overflow ~= nil and self.integrated_backpack
+
    for _, event in ipairs(EVENTS) do
       self.inst:ListenForEvent(event, refresh, self.owner)
+      -- if do_integrated_backpack then self.inst:ListenForEvent(event, refresh, overflow.inst) end
    end
 
    local Rebuild = inventorybar.Rebuild
    function inventorybar:Rebuild()
       Rebuild(inventorybar)
-      inv_positions = virtual_inventory.get_positions(inventorybar.inv)
-      if inventorybar.backpackinv then
-         backpack_positions = virtual_inventory.get_positions(inventorybar.backpackinv)
-      else
-         backpack_positions = {}
-      end
+      virtual_inventory.from(inventorybar.inv):Rebuild()
+      -- if inventorybar.backpackinv then
+      --    backpack_positions = virtual_inventory.get_positions(inventorybar.backpackinv)
+      -- else
+      --    backpack_positions = {}
+      -- end
       refresh()
    end
 end)

@@ -44,4 +44,26 @@ function virtual_inventory.get_positions(invslots)
    return positions
 end
 
+local KEY = "___INSTANT_SORT_DATA"
+---@param invslots ds.widgets.invslot[]
+---@return virual_inventory_data
+function virtual_inventory.from(invslots)
+   if invslots[KEY] then return invslots[KEY] end
+
+   ---@class virual_inventory_data
+   local wrapper = {
+      ---@type ds.vector3[]
+      positions = {},
+   }
+
+   function wrapper:Rebuild() self.positions = virtual_inventory.get_positions(invslots) end
+   function wrapper:Reset() virtual_inventory.reset_invslots(invslots, self.positions) end
+   ---@param comp fun(a: ds.widgets.invslot, b: ds.widgets.invslot): boolean
+   function wrapper:Sort(comp) virtual_inventory.sort_invslots(invslots, self.positions, comp) end
+
+   invslots[KEY] = wrapper
+
+   return wrapper
+end
+
 return virtual_inventory
