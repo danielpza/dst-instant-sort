@@ -5,8 +5,6 @@ GLOBAL.CHEATS_ENABLED = true
 require("debugkeys")
 --
 
-local KEY_TOGGLE = GetModConfigData("KEY_TOGGLE")
-
 ----------------------------HELPERS----------------------------------
 
 ---@generic T
@@ -178,50 +176,10 @@ local INTEGRATED_BACKPACK_EVENTS = {
    "refresh",
 }
 
----@return ds.widgets.inventorybar.inv|nil
-local function get_player_inventorybar()
-   ---@diagnostic disable-next-line: return-type-mismatch
-   return GLOBAL.ThePlayer
-      and GLOBAL.ThePlayer.HUD
-      and GLOBAL.ThePlayer.HUD.controls
-      and GLOBAL.ThePlayer.HUD.controls.inv
-end
-
-local function player_is_ready()
-   return GLOBAL.ThePlayer ~= nil and GLOBAL.TheFrontEnd:GetActiveScreen() == GLOBAL.ThePlayer.HUD
-end
-
-local keepitsorted = true
-
-local function refresh()
-   if not keepitsorted then return end
-   if not player_is_ready() then return end
-   local inventorybar = get_player_inventorybar()
-   if not inventorybar then return end
-
-   virtual_inventory.from(inventorybar.inv):Sort(inventory_sort_cmp)
-end
-
-local function toggle_sort()
-   if not player_is_ready() then return end
-   if not get_player_inventorybar() then return end
-   local inventorybar = get_player_inventorybar()
-   if not inventorybar then return end
-
-   keepitsorted = not keepitsorted
-   if keepitsorted then
-      refresh()
-   else
-      virtual_inventory.from(inventorybar.inv):Reset()
-   end
-end
-
-GLOBAL.TheInput:AddKeyUpHandler(KEY_TOGGLE, toggle_sort)
-
 ---@param self ds.widgets.containerwidget
 AddClassPostConstruct("widgets/containerwidget", function(self)
    local function refresh_container()
-      if not keepitsorted then return end
+      -- if not keepitsorted then return end
       if self.inv then virtual_inventory.from(self.inv):Sort(container_sort_cmp) end
    end
 
@@ -263,13 +221,18 @@ AddClassPostConstruct("widgets/inventorybar", function(self)
    local inventorybar = self
    if inventorybar.owner ~= GLOBAL.ThePlayer then return end
 
+   local function refresh()
+      -- if not keepitsorted then return end
+      virtual_inventory.from(self.inv):Sort(inventory_sort_cmp)
+   end
+
    local function rebuild()
       virtual_inventory.from(self.inv):Rebuild()
       refresh()
    end
 
    local function refresh_backpack()
-      if not keepitsorted then return end
+      -- if not keepitsorted then return end
       virtual_inventory.from(self.backpackinv):Sort(inventory_sort_cmp)
    end
 
