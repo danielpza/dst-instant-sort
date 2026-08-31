@@ -189,11 +189,6 @@ end
 
 local keepitsorted = true
 
--- ---@type ds.vector3[]
--- local inv_positions = {}
--- ---@type ds.vector3[]
--- local backpack_positions = {}
-
 local function refresh()
    if not keepitsorted then return end
    if not player_is_ready() then return end
