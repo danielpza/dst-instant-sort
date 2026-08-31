@@ -45,6 +45,20 @@ local function get_cached_mastersim_prefab(item)
    end
    return cache[item.prefab]
 end
+
+local function unregister_events(instance, events, handler, target)
+   for _, event in ipairs(events) do
+      instance:RemoveEventCallback(event, handler, target)
+   end
+end
+
+local function register_events(instance, events, handler, target)
+   for _, event in ipairs(events) do
+      instance:ListenForEvent(event, handler, target)
+   end
+   return function() unregister_events(instance, events, handler, target) end
+end
+
 ----------------------------HELPERS2----------------------------------
 
 ----------------------------VALUES----------------------------------
@@ -124,7 +138,7 @@ local function sort_by(criteria)
    end
 end
 
----@type invslot_value[]
+---@type invslot_value
 local inventory_sort_cmp = sort_by({
    invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.HANDS),
    invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.HEAD),
@@ -135,6 +149,7 @@ local inventory_sort_cmp = sort_by({
    invslot_name_value,
 })
 
+---@type invslot_value
 local container_sort_cmp = sort_by({
    invslot_is_filled,
    invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.HANDS),
@@ -155,6 +170,12 @@ local EVENTS = {
    "refreshinventory",
    "onplacershown",
    "onplacerhidden",
+}
+
+local INTEGRATED_BACKPACK_EVENTS = {
+   "itemget",
+   "itemlose",
+   "refresh",
 }
 
 ---@return ds.widgets.inventorybar.inv|nil
@@ -179,10 +200,6 @@ local function refresh()
    if not inventorybar then return end
 
    virtual_inventory.from(inventorybar.inv):Sort(inventory_sort_cmp)
-
-   -- if inventorybar.backpackinv then
-   --    virtual_inventory.sort_invslots(inventorybar.backpackinv, backpack_positions, invslot_cmp)
-   -- end
 end
 
 local function toggle_sort()
@@ -196,9 +213,6 @@ local function toggle_sort()
       refresh()
    else
       virtual_inventory.from(inventorybar.inv):Reset()
-      -- if inventorybar.backpackinv then
-      --    virtual_inventory.reset_invslots(inventorybar.backpackinv, backpack_positions)
-      -- end
    end
 end
 
@@ -249,23 +263,36 @@ AddClassPostConstruct("widgets/inventorybar", function(self)
    local inventorybar = self
    if inventorybar.owner ~= GLOBAL.ThePlayer then return end
 
-   -- local overflow = inventorybar.owner.replica.inventory and inventorybar.owner.replica.inventory:GetOverflowContainer()
-   -- local do_integrated_backpack = overflow ~= nil and self.integrated_backpack
-
-   for _, event in ipairs(EVENTS) do
-      self.inst:ListenForEvent(event, refresh, self.owner)
-      -- if do_integrated_backpack then self.inst:ListenForEvent(event, refresh, overflow.inst) end
+   local function refresh_backpack()
+      if not keepitsorted then return end
+      virtual_inventory.from(self.backpackinv):Sort(inventory_sort_cmp)
    end
+
+   local backpack = nil
+
+   register_events(self.inst, EVENTS, refresh, self.owner)
 
    local Rebuild = inventorybar.Rebuild
    function inventorybar:Rebuild()
       Rebuild(inventorybar)
+
       virtual_inventory.from(inventorybar.inv):Rebuild()
-      -- if inventorybar.backpackinv then
-      --    backpack_positions = virtual_inventory.get_positions(inventorybar.backpackinv)
-      -- else
-      --    backpack_positions = {}
-      -- end
       refresh()
+
+      -- similar to what the original code does for the integrated backpack mount/unmount:
+      if backpack then
+         unregister_events(self.inst, INTEGRATED_BACKPACK_EVENTS, refresh_backpack, backpack)
+         backpack = nil
+      end
+      ---@diagnostic disable-next-line: undefined-field
+      backpack = self.backpack
+      if backpack then
+         register_events(self.inst, INTEGRATED_BACKPACK_EVENTS, refresh_backpack, backpack)
+         virtual_inventory.from(self.backpackinv):Rebuild()
+         refresh_backpack()
+      end
    end
 end)
+
+-- local inventory = self.owner.inventory
+-- inventory:GetItemInSlot
