@@ -126,16 +126,12 @@ GLOBAL.TheInput:AddKeyUpHandler(GLOBAL.KEY_P, function()
    if not player_is_ready() then return end
    if not get_player_inventorybar() then return end
 
-   virtual_inv:SortInvSlots(inv_slot_cmp)
-   keepitsorted = true
-end)
-
-GLOBAL.TheInput:AddKeyUpHandler(GLOBAL.KEY_O, function()
-   if not player_is_ready() then return end
-   if not get_player_inventorybar() then return end
-
-   virtual_inv:Reset()
-   keepitsorted = false
+   keepitsorted = not keepitsorted
+   if keepitsorted then
+      refresh()
+   else
+      virtual_inv:Reset()
+   end
 end)
 
 ---@param self ds.widgets.inventorybar.inv
