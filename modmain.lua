@@ -7,6 +7,7 @@ local virtual_inv = require("instant-sort/virtual_inventory")
 
 local KEY_TOGGLE = GetModConfigData("KEY_TOGGLE")
 
+----------------------------HELPERS----------------------------------
 local function cast_number(v)
    if type(v) == "number" then return v end
    if v == nil then return 0 end
@@ -26,7 +27,9 @@ local function cmp(a, b)
    if type(a) == "string" and type(b) == "string" then return cmp_string(a, b) end
    return cast_number(a) - cast_number(b)
 end
+----------------------------HELPERS----------------------------------
 
+----------------------------HELPERS2----------------------------------
 ---@generic T
 ---@param prefab string
 ---@param fn fun(item: ds.entityscript): T
@@ -47,7 +50,9 @@ end
 -- local function with_mastersim_prefab(fn)
 --    return function(item) return simulate_mastersim_prefab(item, fn) end
 -- end
+----------------------------HELPERS2----------------------------------
 
+----------------------------VALUES----------------------------------
 ---@alias item_value fun(a: ds.entityscript): any
 ---@alias invslot_value fun(a: ds.widgets.invslot): any
 
@@ -74,6 +79,7 @@ local function invslot_is_empty(invslot) return not (invslot and invslot.tile an
 local function invslot_name_value(invslot)
    return invslot and invslot.tile and invslot.tile.item and invslot.tile.item.name
 end
+----------------------------VALUES----------------------------------
 
 ---@type invslot_value[]
 local SORT_BY = {
@@ -83,7 +89,7 @@ local SORT_BY = {
 }
 
 ---@type cmp_invslot
-local function inv_slot_cmp(a, b)
+local function invslot_cmp(a, b)
    for _, get_value in ipairs(SORT_BY) do
       local result = cmp(get_value(a), get_value(b))
       if result ~= 0 then return result < 0 end
@@ -122,7 +128,7 @@ local function refresh()
    if not keepitsorted then return end
    if not player_is_ready() then return end
    if not get_player_inventorybar() then return end
-   virtual_inv:SortInvSlots(inv_slot_cmp)
+   virtual_inv:SortInvSlots(invslot_cmp)
 end
 
 local function toggle_sort()
