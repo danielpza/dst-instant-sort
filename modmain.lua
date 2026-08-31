@@ -1,6 +1,6 @@
 -- for debugging
-GLOBAL.CHEATS_ENABLED = true
-require("debugkeys")
+-- GLOBAL.CHEATS_ENABLED = true
+-- require("debugkeys")
 --
 
 local virtual_inventory = require("instant_sort/virtual_inventory")
