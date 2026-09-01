@@ -13,7 +13,7 @@ end
 
 ---@param invslots ds.widgets.invslot[]
 ---@param positions ds.vector3[]
----@param comp fun(a: ds.widgets.invslot, b: ds.widgets.invslot): boolean
+---@param comp fun(a: ds.widgets.invslot, b: ds.widgets.invslot): number
 function virtual_inventory.sort_invslots(invslots, positions, comp)
    ---@type { original_index: integer, invslot: ds.widgets.invslot }[]
    local sorted_slots = {}
@@ -21,7 +21,7 @@ function virtual_inventory.sort_invslots(invslots, positions, comp)
       sorted_slots[#sorted_slots + 1] = { original_index = k, invslot = value }
    end
 
-   table.sort(sorted_slots, function(a, b) return comp(a.invslot, b.invslot) end)
+   table.sort(sorted_slots, function(a, b) return comp(a.invslot, b.invslot) < 0 end)
 
    ---@type table<number, number>
    local slot_redirect = {}
@@ -77,7 +77,7 @@ function virtual_inventory.from(invslots)
       virtual_inventory.reset_invslots(invslots, self.positions)
    end
 
-   ---@param comp fun(a: ds.widgets.invslot, b: ds.widgets.invslot): boolean
+   ---@param comp fun(a: ds.widgets.invslot, b: ds.widgets.invslot): number
    function wrapper:Sort(comp)
       if not self.positions then return end
       self.slot_redirect = virtual_inventory.sort_invslots(invslots, self.positions, comp)

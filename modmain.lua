@@ -66,8 +66,8 @@ end
 ---@alias item_value fun(a: ds.entityscript): any
 ---@alias invslot_value fun(a: ds.widgets.invslot): any
 
----@alias cmp_item fun(a: ds.entityscript, b: ds.entityscript): boolean
----@alias cmp_invslot fun(a: ds.widgets.invslot, b: ds.widgets.invslot): boolean
+---@alias cmp_item fun(a: ds.entityscript, b: ds.entityscript): number
+---@alias cmp_invslot fun(a: ds.widgets.invslot, b: ds.widgets.invslot): number
 
 ---@param item_ ds.entityscript
 ---@param slot ds.equipslot
@@ -123,7 +123,7 @@ local function invslot_prefabs(prefabs)
       -- this code is ugly, there might be a simpler way
       if not item then return 0 end
       local i = utils.index_of(prefabs, item.prefab)
-      if i == 0 then return false end
+      if i == 0 then return 0 end
       return i - #prefabs - 1
    end
 end
@@ -144,9 +144,9 @@ local function sort_by(criteria)
    return function(a, b)
       for _, get_value in ipairs(criteria) do
          local result = utils.cmp(get_value(a), get_value(b))
-         if result ~= 0 then return result < 0 end
+         if result ~= 0 then return result end
       end
-      return false
+      return 0
    end
 end
 
@@ -179,7 +179,7 @@ local container_sort_cmp = sort_by({
    invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.HEAD),
    invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.BODY),
    invslot_is_equippable,
-   invslot_prefabs({ "cutgrass", "twigs", "goldnugget", "flint", "rocks", "log" }),
+   invslot_prefabs_back({ "cutgrass", "twigs", "goldnugget", "flint", "rocks", "log" }),
    invslot_name_value,
 })
 
@@ -249,6 +249,7 @@ AddClassPostConstruct("widgets/containerwidget", function(self)
 end)
 
 AddClassPostConstruct("screens/playerhud", function(self)
+   ---@diagnostic disable: undefined-field
    local REGION_1_START = GLOBAL.CONTROL_INV_1
    local REGION_1_END = GLOBAL.CONTROL_INV_10
    local REGION_1_OFFSET = GLOBAL.CONTROL_INV_1 - 1
@@ -258,6 +259,7 @@ AddClassPostConstruct("screens/playerhud", function(self)
    local REGION_2_OFFSET = GLOBAL.CONTROL_INV_11 - 1
 
    local CONTROL_BORDER = GLOBAL.CONTROL_INV_10 - REGION_1_OFFSET
+   ---@diagnostic enable: undefined-field
 
    local OnControl = self.OnControl
    function self:OnControl(control, down)
