@@ -128,6 +128,15 @@ local function invslot_armor_slot(slot)
    end
 end
 
+local function invslot_armor_condition(invslot)
+   local item = invslot and invslot.tile and invslot.tile.item
+   return item
+      and item.components
+      and item.components.armor
+      and item.components.armor.condition
+      and item.components.armor.condition
+end
+
 ---@param slot ds.equipslot
 ---@return invslot_value
 local function invslot_can_be_equipped_in_slot(slot)
@@ -200,33 +209,35 @@ local inventory_sort_cmp = sort_by({
    invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.HEAD),
    invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.BODY),
    invslot_is_equippable,
-   invslot_is_empty,
    -- TODO
    -- healing
    -- food
    invslot_prefabs_back({ "cutgrass", "twigs", "goldnugget", "flint", "rocks", "log" }),
    invslot_name_value,
+   invslot_armor_condition,
 })
 
----@type invslot_value
-local container_sort_cmp = sort_by({
-   invslot_walkspeed_mult,
-   invslot_prefabs({ "hambat" }),
-   invslot_damage,
-   invslot_armor_slot(GLOBAL.EQUIPSLOTS.HEAD),
-   invslot_armor_slot(GLOBAL.EQUIPSLOTS.BODY),
-   -- TODO
-   -- light
-   -- insulation/raincoat/etc
-   -- tools
-   -- sanity
-   invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.HANDS),
-   invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.HEAD),
-   invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.BODY),
-   invslot_is_equippable,
-   invslot_prefabs_back({ "cutgrass", "twigs", "goldnugget", "flint", "rocks", "log" }),
-   invslot_name_value,
-})
+local container_sort_cmp = inventory_sort_cmp
+
+-- ---@type invslot_value
+-- local container_sort_cmp = sort_by({
+--    invslot_walkspeed_mult,
+--    invslot_prefabs({ "hambat" }),
+--    invslot_damage,
+--    invslot_armor_slot(GLOBAL.EQUIPSLOTS.HEAD),
+--    invslot_armor_slot(GLOBAL.EQUIPSLOTS.BODY),
+--    -- TODO
+--    -- light
+--    -- insulation/raincoat/etc
+--    -- tools
+--    -- sanity
+--    invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.HANDS),
+--    invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.HEAD),
+--    invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.BODY),
+--    invslot_is_equippable,
+--    invslot_prefabs_back({ "cutgrass", "twigs", "goldnugget", "flint", "rocks", "log" }),
+--    invslot_name_value,
+-- })
 
 local INVENTORYBAR_EVENTS = {
    "builditem",
