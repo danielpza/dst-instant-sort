@@ -269,12 +269,14 @@ local INVENTORYBAR_EVENTS = {
    "refreshinventory",
    "onplacershown",
    "onplacerhidden",
+   "stacksizechange",
 }
 
 local INTEGRATED_BACKPACK_EVENTS = {
    "itemget",
    "itemlose",
    "refresh",
+   "stacksizechange",
 }
 
 ---@type virual_inventory_data
