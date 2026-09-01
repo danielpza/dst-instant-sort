@@ -39,6 +39,9 @@ local function get_cached_mastersim_prefab(item_)
                         equipslot = item.components.equippable.equipslot,
                         walkspeedmult = item.components.equippable.walkspeedmult,
                      },
+                     weapon = item.components.weapon and {
+                        damage = item.components.weapon.damage,
+                     },
                   },
                }
          end
@@ -92,6 +95,17 @@ local function invslot_walkspeed_mult(invslot)
       and item.components.equippable.walkspeedmult
       and item.components.equippable.walkspeedmult > 1
       and -item.components.equippable.walkspeedmult
+end
+
+---@type invslot_value
+local function invslot_damage(invslot)
+   local item_ = invslot and invslot.tile and invslot.tile.item
+   local item = item_ and get_cached_mastersim_prefab(item_)
+   return item
+      and item.components
+      and item.components.weapon
+      and item.components.weapon.damage
+      and -item.components.weapon.damage
 end
 
 ---@param slot ds.equipslot
@@ -155,7 +169,7 @@ local inventory_sort_cmp = sort_by({
    -- TODO
    invslot_walkspeed_mult,
    invslot_prefabs({ "hambat" }),
-   -- weapons
+   invslot_damage,
    -- armor
    -- light
    -- insulation/raincoat/etc
