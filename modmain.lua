@@ -34,15 +34,21 @@ local function get_cached_mastersim_prefab(item_)
             return item
                and {
                   prefab = item.prefab,
-                  components = item.components and {
-                     equippable = item.components.equippable and {
-                        equipslot = item.components.equippable.equipslot,
-                        walkspeedmult = item.components.equippable.walkspeedmult,
+                  components = item.components
+                     and {
+                        equippable = item.components.equippable
+                           and {
+                              equipslot = item.components.equippable.equipslot,
+                              walkspeedmult = item.components.equippable.walkspeedmult,
+                           },
+                        weapon = item.components.weapon and {
+                           damage = item.components.weapon.damage,
+                        },
+                        armor = item.components.armor
+                           and {
+                              absorb_percent = item.components.armor.absorb_percent,
+                           },
                      },
-                     weapon = item.components.weapon and {
-                        damage = item.components.weapon.damage,
-                     },
-                  },
                }
          end
       )
@@ -110,6 +116,20 @@ end
 
 ---@param slot ds.equipslot
 ---@return invslot_value
+local function invslot_armor_slot(slot)
+   return function(invslot)
+      local item_ = invslot and invslot.tile and invslot.tile.item
+      local item = item_ and get_cached_mastersim_prefab(item_)
+      return item
+         and item.components
+         and item.components.armor
+         and item.components.armor.absorb_percent
+         and -item.components.armor.absorb_percent
+   end
+end
+
+---@param slot ds.equipslot
+---@return invslot_value
 local function invslot_can_be_equipped_in_slot(slot)
    return function(invslot)
       local item = invslot and invslot.tile and invslot.tile.item
@@ -166,29 +186,40 @@ end
 
 ---@type invslot_value
 local inventory_sort_cmp = sort_by({
-   -- TODO
    invslot_walkspeed_mult,
    invslot_prefabs({ "hambat" }),
    invslot_damage,
-   -- armor
+   invslot_armor_slot(GLOBAL.EQUIPSLOTS.HEAD),
+   invslot_armor_slot(GLOBAL.EQUIPSLOTS.BODY),
+   -- TODO
    -- light
    -- insulation/raincoat/etc
    -- tools
    -- sanity
-   -- healing
-   -- food
    invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.HANDS),
    invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.HEAD),
    invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.BODY),
    invslot_is_equippable,
    invslot_is_empty,
+   -- TODO
+   -- healing
+   -- food
    invslot_prefabs_back({ "cutgrass", "twigs", "goldnugget", "flint", "rocks", "log" }),
    invslot_name_value,
 })
 
 ---@type invslot_value
 local container_sort_cmp = sort_by({
-   invslot_is_filled,
+   invslot_walkspeed_mult,
+   invslot_prefabs({ "hambat" }),
+   invslot_damage,
+   invslot_armor_slot(GLOBAL.EQUIPSLOTS.HEAD),
+   invslot_armor_slot(GLOBAL.EQUIPSLOTS.BODY),
+   -- TODO
+   -- light
+   -- insulation/raincoat/etc
+   -- tools
+   -- sanity
    invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.HANDS),
    invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.HEAD),
    invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.BODY),
