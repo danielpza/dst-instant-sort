@@ -146,6 +146,15 @@ local function invslot_finiteuses(invslot)
       and item.components.finiteuses:GetUses()
 end
 
+local function invslot_stacksize(invslot)
+   local item = invslot and invslot.tile and invslot.tile.item
+   return item
+      and item.components
+      and item.components.stackable
+      and item.components.stackable.StackSize
+      and item.components.stackable:StackSize()
+end
+
 ---@param slot ds.equipslot
 ---@return invslot_value
 local function invslot_can_be_equipped_in_slot(slot)
@@ -225,6 +234,7 @@ local inventory_sort_cmp = sort_by({
    invslot_name_value,
    invslot_armor_condition,
    invslot_finiteuses,
+   invslot_stacksize,
 })
 
 local container_sort_cmp = inventory_sort_cmp
