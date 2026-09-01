@@ -137,6 +137,15 @@ local function invslot_armor_condition(invslot)
       and item.components.armor.condition
 end
 
+local function invslot_finiteuses(invslot)
+   local item = invslot and invslot.tile and invslot.tile.item
+   return item
+      and item.components
+      and item.components.finiteuses
+      and item.components.finiteuses.GetUses
+      and item.components.finiteuses:GetUses()
+end
+
 ---@param slot ds.equipslot
 ---@return invslot_value
 local function invslot_can_be_equipped_in_slot(slot)
@@ -215,6 +224,7 @@ local inventory_sort_cmp = sort_by({
    invslot_prefabs_back({ "cutgrass", "twigs", "goldnugget", "flint", "rocks", "log" }),
    invslot_name_value,
    invslot_armor_condition,
+   invslot_finiteuses,
 })
 
 local container_sort_cmp = inventory_sort_cmp
