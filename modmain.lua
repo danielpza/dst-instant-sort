@@ -123,8 +123,8 @@ local function invslot_prefabs(prefabs)
       -- this code is ugly, there might be a simpler way
       if not item then return 0 end
       local i = utils.index_of(prefabs, item.prefab)
-      if i == 0 then return #prefabs + 1 end
-      return i
+      if i == 0 then return false end
+      return i - #prefabs - 1
    end
 end
 
@@ -154,7 +154,7 @@ end
 local inventory_sort_cmp = sort_by({
    -- TODO
    invslot_walkspeed_mult,
-   -- hambat
+   invslot_prefabs({ "hambat" }),
    -- weapons
    -- armor
    -- light
