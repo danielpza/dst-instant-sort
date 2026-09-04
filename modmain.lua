@@ -107,10 +107,11 @@ end
 local function invslot_damage(invslot)
    local item_ = invslot and invslot.tile and invslot.tile.item
    local item = item_ and get_cached_mastersim_prefab(item_)
+   if item and item.prefab == "wathgrithr_shield" then return -(GLOBAL.TUNING.WATHGRITHR_SHIELD_DAMAGE or 10000) end
    return item
       and item.components
       and item.components.weapon
-      and item.components.weapon.damage
+      and type(item.components.weapon.damage) == "number"
       and -item.components.weapon.damage
 end
 

@@ -1,16 +1,5 @@
 local virtual_inventory = {}
 
----@generic T
----@param arr T[]
----@return T[]
-local function shallow_copy(arr)
-   local sorted = {}
-   for _, value in ipairs(arr) do
-      sorted[#sorted + 1] = value
-   end
-   return sorted
-end
-
 ---@param invslots ds.widgets.invslot[]
 ---@param positions ds.vector3[]
 ---@param comp fun(a: ds.widgets.invslot, b: ds.widgets.invslot): number
