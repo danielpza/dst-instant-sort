@@ -79,6 +79,11 @@ function virtual_inventory.from(invslots)
 
    function wrapper:GetOriginalSlot(index) return self.slot_redirect and self.slot_redirect[index] or index end
 
+   function wrapper:GetVisualSlot(index)
+      local orig_index = self:GetOriginalSlot(index)
+      return invslots[orig_index]
+   end
+
    ---@diagnostic disable-next-line: assign-type-mismatch
    register[invslots] = wrapper
 

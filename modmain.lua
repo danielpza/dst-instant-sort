@@ -69,6 +69,58 @@ local function register_events(instance, events, handler, target)
    return function() unregister_events(instance, events, handler, target) end
 end
 
+---@param invslots ds.widgets.invslot[]
+---@param positions? ds.vector3[]
+---@param active_slot? ds.widgets.invslot
+---@return integer?
+local function find_active_index(invslots, positions, active_slot)
+   if not active_slot or not positions then return nil end
+   local is_in_invslots = false
+   for _, slot in ipairs(invslots) do
+      if slot == active_slot then
+         is_in_invslots = true
+         break
+      end
+   end
+   if not is_in_invslots then return nil end
+
+   ---@type ds.vector3?
+   local active_pos = active_slot:GetPosition()
+   if not active_pos then return nil end
+   local closest_idx = nil
+   local min_distsq = 1
+   for k, pos in ipairs(positions) do
+      local dx = pos.x - active_pos.x
+      local dy = pos.y - active_pos.y
+      local distsq = dx * dx + dy * dy
+      if distsq < min_distsq then
+         min_distsq = distsq
+         closest_idx = k
+      end
+   end
+   return closest_idx
+end
+
+---@param invslots ds.widgets.invslot[]
+---@param comp cmp_invslot
+local function sort_and_maintain_cursor(invslots, comp)
+   if not invslots then return end
+   local invbar = GLOBAL.ThePlayer
+      and GLOBAL.ThePlayer.HUD
+      and GLOBAL.ThePlayer.HUD.controls
+      and GLOBAL.ThePlayer.HUD.controls.inv
+   local v_inv = virtual_inventory.from(invslots)
+   local active_idx = invbar and find_active_index(invslots, v_inv.positions, invbar.active_slot)
+   v_inv:Sort(comp)
+   if active_idx and invbar and invbar.active_slot then
+      local new_active_slot = v_inv:GetVisualSlot(active_idx)
+      if new_active_slot and invbar.active_slot ~= new_active_slot then
+         invbar:SelectSlot(new_active_slot)
+         invbar:UpdateCursor()
+      end
+   end
+end
+
 ----------------------------HELPERS----------------------------------
 
 ----------------------------VALUES----------------------------------
@@ -107,6 +159,7 @@ end
 local function invslot_damage(invslot)
    local item_ = invslot and invslot.tile and invslot.tile.item
    local item = item_ and get_cached_mastersim_prefab(item_)
+   ---@diagnostic disable-next-line: undefined-field
    if item and item.prefab == "wathgrithr_shield" then return -(GLOBAL.TUNING.WATHGRITHR_SHIELD_DAMAGE or 10000) end
    return item
       and item.components
@@ -288,7 +341,7 @@ AddClassPostConstruct("widgets/containerwidget", function(self)
    local function refresh_container()
       -- if not keepitsorted then return end
       if not self.inv then return end
-      virtual_inventory.from(self.inv):Sort(container_sort_cmp)
+      sort_and_maintain_cursor(self.inv, container_sort_cmp)
    end
 
    local function rebuild()
@@ -374,7 +427,7 @@ AddClassPostConstruct("widgets/inventorybar", function(self)
 
    local function refresh()
       -- if not keepitsorted then return end
-      virtual_inventory.from(self.inv):Sort(inventory_sort_cmp)
+      sort_and_maintain_cursor(self.inv, inventory_sort_cmp)
    end
 
    local function rebuild()
@@ -385,7 +438,7 @@ AddClassPostConstruct("widgets/inventorybar", function(self)
 
    local function refresh_backpack()
       -- if not keepitsorted then return end
-      virtual_inventory.from(self.backpackinv):Sort(inventory_sort_cmp)
+      sort_and_maintain_cursor(self.backpackinv, inventory_sort_cmp)
    end
 
    local function rebuild_backpack()
