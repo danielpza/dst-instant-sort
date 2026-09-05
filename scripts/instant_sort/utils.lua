@@ -20,15 +20,4 @@ function utils.cmp(a, b)
    return utils.cast_number(a) - utils.cast_number(b)
 end
 
----@generic T
----@param arr T[]
----@param item T
----@return integer
-function utils.index_of(arr, item)
-   for i, v in ipairs(arr) do
-      if v == item then return i end
-   end
-   return 0
-end
-
 return utils

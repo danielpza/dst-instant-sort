@@ -75,11 +75,6 @@ function VirtualInventory:Sort(comp)
    self.slot_redirect = virtual_inventory.sort_invslots(self.invslots, self.positions, comp)
 end
 
-function VirtualInventory:Kill()
-   -- called from container widget
-   self.positions = nil
-end
-
 function VirtualInventory:GetOriginalSlot(index) return self.slot_redirect and self.slot_redirect[index] or index end
 
 function VirtualInventory:GetVisualSlot(index)
