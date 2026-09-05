@@ -3,6 +3,8 @@
 -- require("debugkeys")
 --
 
+local setmetatable = GLOBAL.setmetatable
+
 local virtual_inventory = require("instant_sort/virtual_inventory")
 local utils = require("instant_sort/utils")
 
@@ -23,13 +25,10 @@ local function simulate_mastersim_prefab(prefab, fn)
 end
 
 ---@type table<string, ds.entityscript>
-local cache = {}
----@param item_ ds.entityscript
----@return ds.entityscript
-local function get_cached_mastersim_prefab(item_)
-   if not cache[item_.prefab] then
-      cache[item_.prefab] = simulate_mastersim_prefab(
-         item_.prefab,
+local prefab_cache = setmetatable({}, {
+   __index = function(tbl, prefab)
+      local data = simulate_mastersim_prefab(
+         prefab,
          function(item)
             return item
                and {
@@ -52,9 +51,14 @@ local function get_cached_mastersim_prefab(item_)
                }
          end
       )
-   end
-   return cache[item_.prefab]
-end
+      tbl[prefab] = data
+      return data
+   end,
+})
+
+---@param item_ ds.entityscript
+---@return ds.entityscript
+local function get_cached_mastersim_prefab(item_) return prefab_cache[item_.prefab] end
 
 local function unregister_events(instance, events, handler, target)
    for _, event in ipairs(events) do
@@ -233,25 +237,28 @@ end
 ---@param prefabs string[]
 ---@return invslot_value
 local function invslot_prefabs(prefabs)
+   local priority_map = {}
+   for i, prefab in ipairs(prefabs) do
+      priority_map[prefab] = i - #prefabs - 1
+   end
    return function(invslot)
       local item = invslot and invslot.tile and invslot.tile.item
-      -- this code is ugly, there might be a simpler way
-      if not item then return 0 end
-      local i = utils.index_of(prefabs, item.prefab)
-      if i == 0 then return 0 end
-      return i - #prefabs - 1
+      return item and priority_map[item.prefab] or 0
    end
 end
 
 ---@param prefabs string[]
 ---@return invslot_value
 local function invslot_prefabs_back(prefabs)
+   local priority_map = {}
+   for i, prefab in ipairs(prefabs) do
+      priority_map[prefab] = i
+   end
    return function(invslot)
       local item = invslot and invslot.tile and invslot.tile.item
-      return item and utils.index_of(prefabs, item.prefab)
+      return item and priority_map[item.prefab] or 0
    end
 end
-
 ----------------------------VALUES----------------------------------
 
 local function sort_by(criteria)

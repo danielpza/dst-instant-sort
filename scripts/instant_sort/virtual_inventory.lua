@@ -43,7 +43,49 @@ function virtual_inventory.get_positions(invslots)
    return positions
 end
 
-local register = {}
+local register = setmetatable({}, { __mode = "k" })
+
+---@class virual_inventory_data
+---@field invslots ds.widgets.invslot[]
+---@field positions ds.vector3[]
+---@field slot_redirect table<number, number>
+local VirtualInventory = {}
+VirtualInventory.__index = VirtualInventory
+
+---@param invslots ds.widgets.invslot[]
+---@return virual_inventory_data
+function VirtualInventory.new(invslots)
+   local self = setmetatable({}, VirtualInventory)
+   self.invslots = invslots
+   self.positions = nil
+   self.slot_redirect = nil
+   return self
+end
+
+function VirtualInventory:Rebuild() self.positions = virtual_inventory.get_positions(self.invslots) end
+
+function VirtualInventory:Reset()
+   if not self.positions then return end
+   virtual_inventory.reset_invslots(self.invslots, self.positions)
+end
+
+---@param comp fun(a: ds.widgets.invslot, b: ds.widgets.invslot): number
+function VirtualInventory:Sort(comp)
+   if not self.positions then return end
+   self.slot_redirect = virtual_inventory.sort_invslots(self.invslots, self.positions, comp)
+end
+
+function VirtualInventory:Kill()
+   -- called from container widget
+   self.positions = nil
+end
+
+function VirtualInventory:GetOriginalSlot(index) return self.slot_redirect and self.slot_redirect[index] or index end
+
+function VirtualInventory:GetVisualSlot(index)
+   local orig_index = self:GetOriginalSlot(index)
+   return self.invslots[orig_index]
+end
 
 ---@param invslots ds.widgets.invslot[]
 ---@return virual_inventory_data
@@ -51,39 +93,7 @@ function virtual_inventory.from(invslots)
    ---@diagnostic disable-next-line: return-type-mismatch
    if register[invslots] then return register[invslots] end
 
-   ---@class virual_inventory_data
-   local wrapper = {
-      ---@type ds.vector3[]
-      positions = nil,
-      ---@type table<number, number>
-      slot_redirect = nil,
-   }
-
-   function wrapper:Rebuild() self.positions = virtual_inventory.get_positions(invslots) end
-
-   function wrapper:Reset()
-      if not self.positions then return end
-      virtual_inventory.reset_invslots(invslots, self.positions)
-   end
-
-   ---@param comp fun(a: ds.widgets.invslot, b: ds.widgets.invslot): number
-   function wrapper:Sort(comp)
-      if not self.positions then return end
-      self.slot_redirect = virtual_inventory.sort_invslots(invslots, self.positions, comp)
-   end
-
-   function wrapper:Kill()
-      -- called from container widget
-      self.positions = nil
-   end
-
-   function wrapper:GetOriginalSlot(index) return self.slot_redirect and self.slot_redirect[index] or index end
-
-   function wrapper:GetVisualSlot(index)
-      local orig_index = self:GetOriginalSlot(index)
-      return invslots[orig_index]
-   end
-
+   local wrapper = VirtualInventory.new(invslots)
    ---@diagnostic disable-next-line: assign-type-mismatch
    register[invslots] = wrapper
 
