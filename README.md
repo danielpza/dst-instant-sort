@@ -1,4 +1,4 @@
-# DST - Instant Sort
+# DST - Instant Sort [![Steam Downloads](https://img.shields.io/steam/downloads/3793378886?color=blue&label=steam%20downloads)](https://steamcommunity.com/sharedfiles/filedetails/?id=3793378886) [![Steam Subscriptions](https://img.shields.io/steam/subscriptions/3793378886)](https://steamcommunity.com/sharedfiles/filedetails/?id=3793378886)
 
 Client side only mod for Don't Starve Together.
 
