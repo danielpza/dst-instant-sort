@@ -3,63 +3,11 @@
 -- require("debugkeys")
 --
 
-local setmetatable = GLOBAL.setmetatable
-
+local mastersim_prefabs = require("instant_sort/mastersim_prefabs")
 local virtual_inventory = require("instant_sort/virtual_inventory")
 local utils = require("instant_sort/utils")
 
 ----------------------------HELPERS----------------------------------
-
----@generic T
----@param prefab string
----@param fn fun(item: ds.entityscript): T
----@return T
-local function simulate_mastersim_prefab(prefab, fn)
-   local isMasterSim = GLOBAL.TheWorld.ismastersim
-   GLOBAL.TheWorld.ismastersim = true
-   local entity = GLOBAL.SpawnPrefab(prefab)
-   local result = fn(entity)
-   entity:Remove()
-   GLOBAL.TheWorld.ismastersim = isMasterSim
-   return result
-end
-
----@type table<string, ds.entityscript>
-local prefab_cache = setmetatable({}, {
-   __index = function(tbl, prefab)
-      local data = simulate_mastersim_prefab(
-         prefab,
-         function(item)
-            return item
-               and {
-                  prefab = item.prefab,
-                  components = item.components
-                     and {
-                        equippable = item.components.equippable
-                           and {
-                              equipslot = item.components.equippable.equipslot,
-                              walkspeedmult = item.components.equippable.walkspeedmult,
-                           },
-                        weapon = item.components.weapon and {
-                           damage = item.components.weapon.damage,
-                        },
-                        armor = item.components.armor
-                           and {
-                              absorb_percent = item.components.armor.absorb_percent,
-                           },
-                     },
-               }
-         end
-      )
-      tbl[prefab] = data
-      return data
-   end,
-})
-
----@param item_ ds.entityscript
----@return ds.entityscript
-local function get_cached_mastersim_prefab(item_) return prefab_cache[item_.prefab] end
-
 local function unregister_events(instance, events, handler, target)
    for _, event in ipairs(events) do
       instance:RemoveEventCallback(event, handler, target)
@@ -138,7 +86,7 @@ end
 ---@param slot ds.equipslot
 ---@return boolean
 local function can_item_be_equipped_in_slot(item_, slot)
-   local item = get_cached_mastersim_prefab(item_)
+   local item = mastersim_prefabs.get_mastersim_prefab_data(item_)
    return item and item.components and item.components.equippable and item.components.equippable.equipslot == slot
 end
 
@@ -151,7 +99,7 @@ end
 ---@type invslot_value
 local function invslot_walkspeed_mult(invslot)
    local item_ = invslot and invslot.tile and invslot.tile.item
-   local item = item_ and get_cached_mastersim_prefab(item_)
+   local item = item_ and mastersim_prefabs.get_mastersim_prefab_data(item_)
    return item
       and item.components.equippable
       and item.components.equippable.walkspeedmult
@@ -162,7 +110,7 @@ end
 ---@type invslot_value
 local function invslot_damage(invslot)
    local item_ = invslot and invslot.tile and invslot.tile.item
-   local item = item_ and get_cached_mastersim_prefab(item_)
+   local item = item_ and mastersim_prefabs.get_mastersim_prefab_data(item_)
    ---@diagnostic disable-next-line: undefined-field
    if item and item.prefab == "wathgrithr_shield" then return -(GLOBAL.TUNING.WATHGRITHR_SHIELD_DAMAGE or 10000) end
    return item
@@ -177,7 +125,7 @@ end
 local function invslot_armor_slot(slot)
    return function(invslot)
       local item_ = invslot and invslot.tile and invslot.tile.item
-      local item = item_ and get_cached_mastersim_prefab(item_)
+      local item = item_ and mastersim_prefabs.get_mastersim_prefab_data(item_)
       return item
          and item.components
          and item.components.armor
