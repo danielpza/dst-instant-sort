@@ -387,42 +387,36 @@ AddClassPostConstruct("widgets/containerwidget", function(self)
    end
 end)
 
+---@diagnostic disable: undefined-field
+---@param control integer
+local function inventory_input_control_to_index(control)
+   if control >= GLOBAL.CONTROL_INV_1 and control <= GLOBAL.CONTROL_INV_10 then
+      return control - (GLOBAL.CONTROL_INV_1 - 1)
+   elseif control >= GLOBAL.CONTROL_INV_11 and control <= GLOBAL.CONTROL_INV_15 then
+      return control - (GLOBAL.CONTROL_INV_11 - 1) + (GLOBAL.CONTROL_INV_10 - (GLOBAL.CONTROL_INV_1 - 1))
+   else
+      return nil
+   end
+end
+
+---@param index integer
+local function inventory_index_to_input_control(index)
+   if index <= (GLOBAL.CONTROL_INV_10 - (GLOBAL.CONTROL_INV_1 - 1)) then
+      return index + (GLOBAL.CONTROL_INV_1 - 1)
+   else
+      return index + (GLOBAL.CONTROL_INV_11 - 1) - (GLOBAL.CONTROL_INV_10 - (GLOBAL.CONTROL_INV_1 - 1))
+   end
+end
+---@diagnostic enable: undefined-field
+
 AddClassPostConstruct("screens/playerhud", function(self)
-   ---@diagnostic disable: undefined-field
-   local REGION_1_START = GLOBAL.CONTROL_INV_1
-   local REGION_1_END = GLOBAL.CONTROL_INV_10
-   local REGION_1_OFFSET = GLOBAL.CONTROL_INV_1 - 1
-
-   local REGION_2_START = GLOBAL.CONTROL_INV_11
-   local REGION_2_END = GLOBAL.CONTROL_INV_15
-   local REGION_2_OFFSET = GLOBAL.CONTROL_INV_11 - 1
-
-   local CONTROL_BORDER = GLOBAL.CONTROL_INV_10 - REGION_1_OFFSET
-   ---@diagnostic enable: undefined-field
-
    local OnControl = self.OnControl
    function self:OnControl(control, down)
       -- intercept control
-      if player_virtual_inventory and control >= REGION_1_START and control <= REGION_1_END then
-         local hot_key_num = control - REGION_1_OFFSET
-         local new_hot_key_num = player_virtual_inventory:GetOriginalSlot(hot_key_num)
-
-         if new_hot_key_num <= CONTROL_BORDER then
-            control = new_hot_key_num + REGION_1_OFFSET
-         else
-            control = new_hot_key_num + REGION_2_OFFSET - CONTROL_BORDER
-         end
-      elseif player_virtual_inventory and control >= REGION_2_START and control <= REGION_2_END then
-         local hot_key_num = control - REGION_2_OFFSET + CONTROL_BORDER
-         local new_hot_key_num = player_virtual_inventory:GetOriginalSlot(hot_key_num)
-
-         if new_hot_key_num <= CONTROL_BORDER then
-            control = new_hot_key_num + REGION_1_OFFSET
-         else
-            control = new_hot_key_num + REGION_2_OFFSET - CONTROL_BORDER
-         end
+      if player_virtual_inventory then
+         local index = inventory_input_control_to_index(control)
+         if index then control = inventory_index_to_input_control(player_virtual_inventory:GetOriginalSlot(index)) end
       end
-
       return OnControl(self, control, down)
    end
 end)
