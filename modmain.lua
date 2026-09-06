@@ -226,6 +226,11 @@ local invslot_is_weapon = invslot_item_mastersim(function(item)
    return damage and -damage >= DAMAGE_WEAPON_THRESHOLD
 end)
 
+---@param tag string
+local invslot_tag = function(tag)
+   invslot_item(function(item) return item and item:HasTag(tag) end)
+end
+
 ---@param slot ds.equipslot
 ---@return invslot_value
 local function invslot_can_be_equipped_in_slot(slot)
@@ -297,6 +302,7 @@ local function get_sort(container)
       invslot_armor_slot(GLOBAL.EQUIPSLOTS.BODY),
       invslot_is_equippable,
       container and invslot_is_filled or invslot_is_empty,
+      invslot_tag("fertilizer"),
       -- TODO
       -- light
       -- insulation/raincoat/etc
