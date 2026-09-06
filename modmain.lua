@@ -167,11 +167,18 @@ end
 
 local PERISH_THRESHOLD = 63 -- if item reports 63, it is not perishable
 
+---@type item_value
 local function item_perish(item)
    local classified = get_inventoryitem_classified(item)
    local perishable_value = classified and classified.perish and -(1 / classified.perish:value())
    if perishable_value == PERISH_THRESHOLD then return false end
    return perishable_value and perishable_value - PERISH_THRESHOLD
+end
+
+---@type item_value
+local function item_deployable(item)
+   local classified = get_inventoryitem_classified(item)
+   return classified and classified.deploymode and -classified.deploymode:value()
 end
 --#regionend
 
@@ -213,6 +220,7 @@ local invslot_stacksize = invslot_item(item_stacksize)
 local invslot_armor = invslot_item_mastersim(mastersim_armor)
 local invslot_percentused = invslot_item(item_percentused)
 local invslot_perish = invslot_item(item_perish)
+local invslot_is_root = invslot_item(item_deployable)
 
 ---@param slot ds.equipslot
 local function invslot_armor_slot(slot)
