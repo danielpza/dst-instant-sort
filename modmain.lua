@@ -146,12 +146,28 @@ local function item_finiteuses(item)
       and item.components.finiteuses:GetUses()
 end
 
+---@type item_value
 local function item_stacksize(item)
    return item
       and item.components
       and item.components.stackable
       and item.components.stackable.StackSize
       and item.components.stackable:StackSize()
+end
+
+local function get_inventoryitem_classified(item)
+   return item and item.replica and item.replica.inventoryitem and item.replica.inventoryitem.classified
+end
+
+---@type item_value
+local function item_percentused(item)
+   local classified = get_inventoryitem_classified(item)
+   return classified and classified.percentused and classified.percentused:value()
+end
+
+local function item_perish(item)
+   local classified = get_inventoryitem_classified(item)
+   return classified and classified.perish and classified.perish:value()
 end
 --#regionend
 
@@ -190,7 +206,9 @@ local invslot_damage = invslot_item_mastersim(mastersim_damage)
 local invslot_armor_condition = invslot_item(item_armor_condition)
 local invslot_finiteuses = invslot_item(item_finiteuses)
 local invslot_stacksize = invslot_item(item_stacksize)
-local invslot_armor = invslot_item(mastersim_armor)
+local invslot_armor = invslot_item_mastersim(mastersim_armor)
+local invslot_percentused = invslot_item(item_percentused)
+local invslot_perish = invslot_item(item_perish)
 
 ---@param slot ds.equipslot
 local function invslot_armor_slot(slot)
@@ -284,10 +302,12 @@ local inventory_sort_cmp = sort_by({
    invslot_walkspeed_mult,
    invslot_damage,
    invslot_armor,
+   invslot_perish,
    invslot_name_value,
    invslot_armor_condition,
    invslot_finiteuses,
    invslot_stacksize,
+   invslot_percentused,
 })
 
 local container_sort_cmp = inventory_sort_cmp
