@@ -7,6 +7,15 @@ local mastersim_prefabs = require("instant_sort/mastersim_prefabs")
 local virtual_inventory = require("instant_sort/virtual_inventory")
 local utils = require("instant_sort/utils")
 
+local DAMAGE_WEAPON_THRESHOLD = 34 -- amount of damage a equippable does to be considered a weapon, roughly what a spear do
+
+---@type table<string, item_value>
+local PREFABS_DAMAGE_OVERRIDES = {
+   ---@diagnostic disable-next-line: undefined-field
+   wathgrithr_shield = function() return -(GLOBAL.TUNING.WATHGRITHR_SHIELD_DAMAGE or 10000) end,
+   hambat = function() return -10001 end,
+}
+
 ----------------------------HELPERS----------------------------------
 local function unregister_events(instance, events, handler, target)
    for _, event in ipairs(events) do
@@ -75,44 +84,34 @@ end
 
 ----------------------------HELPERS----------------------------------
 
-----------------------------VALUES----------------------------------
 ---@alias item_value fun(a: ds.entityscript): any
 ---@alias invslot_value fun(a: ds.widgets.invslot): any
 
 ---@alias cmp_item fun(a: ds.entityscript, b: ds.entityscript): number
 ---@alias cmp_invslot fun(a: ds.widgets.invslot, b: ds.widgets.invslot): number
 
----@param item_ ds.entityscript
+--#region mastersim_helpers
+--NOTE: These helpers require the "mastersim" prefab, which is not available in client side mods without a workaround
+
+---@param item ds.entityscript
 ---@param slot ds.equipslot
----@return boolean
-local function can_item_be_equipped_in_slot(item_, slot)
-   local item = mastersim_prefabs.get_mastersim_prefab_data(item_)
+local function mastersim_can_equipped_in_slot(item, slot)
    return item and item.components and item.components.equippable and item.components.equippable.equipslot == slot
 end
 
----@type invslot_value
-local function invslot_is_equippable(invslot)
-   local item = invslot and invslot.tile and invslot.tile.item
-   return item and item.replica and item.replica.equippable
-end
-
----@type invslot_value
-local function invslot_walkspeed_mult(invslot)
-   local item_ = invslot and invslot.tile and invslot.tile.item
-   local item = item_ and mastersim_prefabs.get_mastersim_prefab_data(item_)
+---@type item_value
+local function mastersim_walkspeed_mult(item)
    return item
+      and item.components
       and item.components.equippable
       and item.components.equippable.walkspeedmult
       and item.components.equippable.walkspeedmult > 1
       and -item.components.equippable.walkspeedmult
 end
 
----@type invslot_value
-local function invslot_damage(invslot)
-   local item_ = invslot and invslot.tile and invslot.tile.item
-   local item = item_ and mastersim_prefabs.get_mastersim_prefab_data(item_)
-   ---@diagnostic disable-next-line: undefined-field
-   if item and item.prefab == "wathgrithr_shield" then return -(GLOBAL.TUNING.WATHGRITHR_SHIELD_DAMAGE or 10000) end
+---@type item_value
+local function mastersim_damage(item)
+   if item and PREFABS_DAMAGE_OVERRIDES[item.prefab] then return PREFABS_DAMAGE_OVERRIDES[item.prefab](item) end
    return item
       and item.components
       and item.components.weapon
@@ -120,31 +119,26 @@ local function invslot_damage(invslot)
       and -item.components.weapon.damage
 end
 
----@param slot ds.equipslot
----@return invslot_value
-local function invslot_armor_slot(slot)
-   return function(invslot)
-      local item_ = invslot and invslot.tile and invslot.tile.item
-      local item = item_ and mastersim_prefabs.get_mastersim_prefab_data(item_)
-      return item
-         and item.components
-         and item.components.armor
-         and item.components.armor.absorb_percent
-         and -item.components.armor.absorb_percent
-   end
-end
-
-local function invslot_armor_condition(invslot)
-   local item = invslot and invslot.tile and invslot.tile.item
+---@type item_value
+local function mastersim_armor(item)
    return item
       and item.components
       and item.components.armor
-      and item.components.armor.condition
-      and item.components.armor.condition
+      and item.components.armor.absorb_percent
+      and -item.components.armor.absorb_percent
+end
+--#endregion
+--#region replica helpers, these don't need the mastersim
+---@type item_value
+local function item_equippable(item) return item and item.replica and item.replica.equippable end
+
+---@type item_value
+local function item_armor_condition(item)
+   return item and item.components and item.components.armor and item.components.armor.condition
 end
 
-local function invslot_finiteuses(invslot)
-   local item = invslot and invslot.tile and invslot.tile.item
+---@type item_value
+local function item_finiteuses(item)
    return item
       and item.components
       and item.components.finiteuses
@@ -152,14 +146,63 @@ local function invslot_finiteuses(invslot)
       and item.components.finiteuses:GetUses()
 end
 
-local function invslot_stacksize(invslot)
-   local item = invslot and invslot.tile and invslot.tile.item
+local function item_stacksize(item)
    return item
       and item.components
       and item.components.stackable
       and item.components.stackable.StackSize
       and item.components.stackable:StackSize()
 end
+--#regionend
+
+----------------------------VALUES----------------------------------
+---@param fn item_value
+---@return invslot_value
+local function invslot_item(fn)
+   return function(invslot)
+      local item = invslot and invslot.tile and invslot.tile.item
+      return item and fn(item)
+   end
+end
+
+local function get_item_prefab(item) return item and item.prefab end
+
+---@param fn item_value
+---@return invslot_value
+local function invslot_item_mastersim(fn)
+   local cached_fn = utils.memoize(fn, get_item_prefab)
+   return function(invslot)
+      local item = invslot and invslot.tile and invslot.tile.item
+      return item and cached_fn(mastersim_prefabs.get_mastersim_prefab_data(item))
+   end
+end
+
+---@param item ds.entityscript
+---@param slot ds.equipslot
+---@return boolean
+local function can_item_be_equipped_in_slot(item, slot)
+   return item and mastersim_can_equipped_in_slot(mastersim_prefabs.get_mastersim_prefab_data(item), slot)
+end
+
+local invslot_is_equippable = invslot_item(item_equippable)
+local invslot_walkspeed_mult = invslot_item_mastersim(mastersim_walkspeed_mult)
+local invslot_damage = invslot_item_mastersim(mastersim_damage)
+local invslot_armor_condition = invslot_item(item_armor_condition)
+local invslot_finiteuses = invslot_item(item_finiteuses)
+local invslot_stacksize = invslot_item(item_stacksize)
+local invslot_armor = invslot_item(mastersim_armor)
+
+---@param slot ds.equipslot
+local function invslot_armor_slot(slot)
+   return invslot_item_mastersim(
+      function(item) return item and mastersim_can_equipped_in_slot(item, slot) and mastersim_armor(item) end
+   )
+end
+
+local invslot_is_weapon = invslot_item_mastersim(function(item)
+   local damage = mastersim_damage(item)
+   return damage and -damage >= DAMAGE_WEAPON_THRESHOLD
+end)
 
 ---@param slot ds.equipslot
 ---@return invslot_value
@@ -221,25 +264,26 @@ local function sort_by(criteria)
 end
 
 ---@type invslot_value
+
 local inventory_sort_cmp = sort_by({
    invslot_walkspeed_mult,
-   invslot_prefabs({ "hambat" }),
-   invslot_damage,
+   invslot_is_weapon,
    invslot_armor_slot(GLOBAL.EQUIPSLOTS.HEAD),
    invslot_armor_slot(GLOBAL.EQUIPSLOTS.BODY),
+   invslot_is_equippable,
+   invslot_is_empty,
    -- TODO
    -- light
    -- insulation/raincoat/etc
    -- tools
    -- sanity
-   invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.HANDS),
-   invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.HEAD),
-   invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.BODY),
-   invslot_is_equippable,
    -- TODO
    -- healing
    -- food
-   invslot_prefabs_back({ "cutgrass", "twigs", "goldnugget", "flint", "rocks", "log" }),
+   -- general sorting
+   invslot_walkspeed_mult,
+   invslot_damage,
+   invslot_armor,
    invslot_name_value,
    invslot_armor_condition,
    invslot_finiteuses,
@@ -247,26 +291,6 @@ local inventory_sort_cmp = sort_by({
 })
 
 local container_sort_cmp = inventory_sort_cmp
-
--- ---@type invslot_value
--- local container_sort_cmp = sort_by({
---    invslot_walkspeed_mult,
---    invslot_prefabs({ "hambat" }),
---    invslot_damage,
---    invslot_armor_slot(GLOBAL.EQUIPSLOTS.HEAD),
---    invslot_armor_slot(GLOBAL.EQUIPSLOTS.BODY),
---    -- TODO
---    -- light
---    -- insulation/raincoat/etc
---    -- tools
---    -- sanity
---    invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.HANDS),
---    invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.HEAD),
---    invslot_can_be_equipped_in_slot(GLOBAL.EQUIPSLOTS.BODY),
---    invslot_is_equippable,
---    invslot_prefabs_back({ "cutgrass", "twigs", "goldnugget", "flint", "rocks", "log" }),
---    invslot_name_value,
--- })
 
 local INVENTORYBAR_EVENTS = {
    "builditem",

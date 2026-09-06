@@ -20,4 +20,42 @@ function utils.cmp(a, b)
    return utils.cast_number(a) - utils.cast_number(b)
 end
 
+-- memoize function
+-- see https://lodash.info/doc/memoize
+function utils.memoize(fn, get_key)
+   local cache = {}
+   return function(param)
+      local key = get_key(param)
+      if not cache[key] then cache[key] = fn(param) end
+      return cache[key]
+   end
+end
+
+---@generic T
+---@param to T[]
+---@param from T[]
+---@return T[]
+function utils.table_append_many(to, from)
+   for _, value in ipairs(from) do
+      to[#to + 1] = value
+   end
+   return to
+end
+
+---@generic T
+---@param tbl T[]
+---@return T[]
+function utils.table_shallow_copy(tbl) return utils.table_append_many({}, tbl) end
+
+---@generic T
+---@param tbl1 T[][]
+---@return T[]
+function utils.table_flatten(tbls)
+   local result = {}
+   for _, tbl in ipairs(tbls) do
+      utils.table_append_many(result, tbl)
+   end
+   return result
+end
+
 return utils
