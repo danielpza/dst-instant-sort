@@ -44,7 +44,7 @@ end
 name = "Instant Sort"
 description = "Keep inventory sorted at all times with no delay. Pure client side."
 author = "danielpza"
-version = "0.2.2"
+version = "0.3.0"
 
 -- icon_atlas = "icon_atlas.xml"
 -- icon = "icon.tex"
