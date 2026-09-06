@@ -289,34 +289,37 @@ end
 
 ---@type invslot_value
 
-local inventory_sort_cmp = sort_by({
-   invslot_walkspeed_mult,
-   invslot_is_weapon,
-   invslot_armor_slot(GLOBAL.EQUIPSLOTS.HEAD),
-   invslot_armor_slot(GLOBAL.EQUIPSLOTS.BODY),
-   invslot_is_equippable,
-   invslot_is_empty,
-   -- TODO
-   -- light
-   -- insulation/raincoat/etc
-   -- tools
-   -- sanity
-   -- TODO
-   -- healing
-   -- food
-   -- general sorting
-   invslot_walkspeed_mult,
-   invslot_damage,
-   invslot_armor,
-   invslot_perish,
-   invslot_name_value,
-   invslot_armor_condition,
-   invslot_finiteuses,
-   invslot_stacksize,
-   invslot_percentused,
-})
+local function get_sort(container)
+   return sort_by({
+      invslot_walkspeed_mult,
+      invslot_is_weapon,
+      invslot_armor_slot(GLOBAL.EQUIPSLOTS.HEAD),
+      invslot_armor_slot(GLOBAL.EQUIPSLOTS.BODY),
+      invslot_is_equippable,
+      container and invslot_is_filled or invslot_is_empty,
+      -- TODO
+      -- light
+      -- insulation/raincoat/etc
+      -- tools
+      -- sanity
+      -- TODO
+      -- healing
+      -- food
+      -- general sorting
+      invslot_walkspeed_mult,
+      invslot_damage,
+      invslot_armor,
+      invslot_perish,
+      invslot_name_value,
+      invslot_armor_condition,
+      invslot_finiteuses,
+      invslot_stacksize,
+      invslot_percentused,
+   })
+end
 
-local container_sort_cmp = inventory_sort_cmp
+local inventory_sort_cmp = get_sort()
+local container_sort_cmp = get_sort(true)
 
 local INVENTORYBAR_EVENTS = {
    "builditem",
