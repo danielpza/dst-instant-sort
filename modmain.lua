@@ -228,7 +228,7 @@ end)
 
 ---@param tag string
 local invslot_tag = function(tag)
-   invslot_item(function(item) return item and item:HasTag(tag) end)
+   return invslot_item(function(item) return item and item:HasTag(tag) end)
 end
 
 ---@param slot ds.equipslot
