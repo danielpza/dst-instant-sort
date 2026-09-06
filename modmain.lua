@@ -165,9 +165,13 @@ local function item_percentused(item)
    return classified and classified.percentused and classified.percentused:value()
 end
 
+local PERISH_THRESHOLD = 63 -- if item reports 63, it is not perishable
+
 local function item_perish(item)
    local classified = get_inventoryitem_classified(item)
-   return classified and classified.perish and classified.perish:value()
+   local perishable_value = classified and classified.perish and -(1 / classified.perish:value())
+   if perishable_value == PERISH_THRESHOLD then return false end
+   return perishable_value and perishable_value - PERISH_THRESHOLD
 end
 --#regionend
 
@@ -274,8 +278,10 @@ local function sort_by(criteria)
    ---@type cmp_invslot
    return function(a, b)
       for _, get_value in ipairs(criteria) do
-         local result = utils.cmp(get_value(a), get_value(b))
-         if result ~= 0 then return result end
+         if type(get_value) == "function" then
+            local result = utils.cmp(get_value(a), get_value(b))
+            if result ~= 0 then return result end
+         end
       end
       return 0
    end
