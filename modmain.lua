@@ -310,7 +310,9 @@ local function get_sort(container)
       invslot_armor_slot(GLOBAL.EQUIPSLOTS.BODY),
       invslot_is_equippable,
       container and invslot_is_filled or invslot_is_empty,
+      invslot_perish,
       invslot_tag("fertilizer"),
+      invslot_is_root,
       -- TODO
       -- light
       -- insulation/raincoat/etc
@@ -320,10 +322,8 @@ local function get_sort(container)
       -- healing
       -- food
       -- general sorting
-      invslot_walkspeed_mult,
       invslot_damage,
       invslot_armor,
-      invslot_perish,
       invslot_name_value,
       invslot_armor_condition,
       invslot_finiteuses,
